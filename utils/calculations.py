@@ -442,3 +442,389 @@ def get_match_summary(df, match_id):
     }
     
     return summary 
+
+def get_team_chemistry_matrix(df):
+    """Analyze which players work best together in team matches"""
+    if df.empty:
+        return {}
+    
+    team_matches = df[df['game_mode'] == 'Team']
+    if team_matches.empty:
+        return {}
+    
+    # Get all unique players who played team matches
+    team_players = team_matches['player_name'].unique()
+    chemistry_matrix = {}
+    
+    for player1 in team_players:
+        chemistry_matrix[player1] = {}
+        for player2 in team_players:
+            if player1 != player2:
+                # Find matches where both players were on the same team
+                player1_matches = team_matches[team_matches['player_name'] == player1]
+                player2_matches = team_matches[team_matches['player_name'] == player2]
+                
+                # Find common matches
+                common_matches = set(player1_matches['match_id']).intersection(set(player2_matches['match_id']))
+                
+                if common_matches:
+                    # Calculate team performance when both players are together
+                    team_performance = []
+                    for match_id in common_matches:
+                        match_data = team_matches[team_matches['match_id'] == match_id]
+                        player1_team = match_data[match_data['player_name'] == player1]['team'].iloc[0]
+                        player2_team = match_data[match_data['player_name'] == player2]['team'].iloc[0]
+                        
+                        if player1_team == player2_team:
+                            # They're on the same team
+                            team_score = match_data[match_data['team'] == player1_team]['score'].sum()
+                            other_teams = match_data[match_data['team'] != player1_team]
+                            
+                            if not other_teams.empty:
+                                other_team_scores = other_teams.groupby('team')['score'].sum()
+                                max_other_score = other_team_scores.max()
+                                won = team_score > max_other_score
+                                team_performance.append(won)
+                    
+                    if team_performance:
+                        win_rate = sum(team_performance) / len(team_performance) * 100
+                        chemistry_matrix[player1][player2] = {
+                            'matches_together': len(team_performance),
+                            'win_rate': round(win_rate, 1),
+                            'chemistry_score': round(win_rate / 100, 2)  # Normalized 0-1
+                        }
+                    else:
+                        chemistry_matrix[player1][player2] = None
+                else:
+                    chemistry_matrix[player1][player2] = None
+    
+    return chemistry_matrix
+
+def get_player_role_analysis(df):
+    """Analyze player roles based on their playing style"""
+    if df.empty:
+        return {}
+    
+    players = df['player_name'].unique()
+    role_analysis = {}
+    
+    for player in players:
+        player_stats = get_player_stats(df, player)
+        if player_stats:
+            # Calculate role indicators
+            kd_ratio = player_stats['kd_ratio']
+            kills_per_min = player_stats['kills_per_minute']
+            assists_per_min = player_stats['assists_per_minute']
+            deaths_per_min = player_stats['deaths_per_minute']
+            win_rate = player_stats['win_rate']
+            
+            # Determine primary role
+            if kd_ratio > 1.5 and kills_per_min > 0.8:
+                primary_role = "Killer"
+                role_description = "High K/D ratio and kill rate - primary damage dealer"
+            elif assists_per_min > 0.3 and deaths_per_min < 0.5:
+                primary_role = "Support"
+                role_description = "High assist rate with low deaths - team support player"
+            elif kd_ratio < 0.8 and deaths_per_min > 0.8:
+                primary_role = "Aggressive"
+                role_description = "High death rate - aggressive but risky playstyle"
+            elif win_rate > 60 and kd_ratio > 1.0:
+                primary_role = "Leader"
+                role_description = "High win rate with good K/D - team leader"
+            else:
+                primary_role = "Balanced"
+                role_description = "Well-rounded player with balanced stats"
+            
+            # Calculate role strengths
+            role_strengths = {
+                'killing_power': min(kd_ratio / 2.0, 1.0),  # Normalized 0-1
+                'support_value': min(assists_per_min / 0.5, 1.0),  # Normalized 0-1
+                'survival_rate': max(1 - deaths_per_min / 1.0, 0.0),  # Normalized 0-1
+                'winning_ability': win_rate / 100.0,  # Normalized 0-1
+                'consistency': min(player_stats['total_matches'] / 20.0, 1.0)  # Based on match count
+            }
+            
+            role_analysis[player] = {
+                'primary_role': primary_role,
+                'role_description': role_description,
+                'role_strengths': role_strengths,
+                'stats': {
+                    'kd_ratio': kd_ratio,
+                    'kills_per_minute': kills_per_min,
+                    'assists_per_minute': assists_per_min,
+                    'deaths_per_minute': deaths_per_min,
+                    'win_rate': win_rate
+                }
+            }
+    
+    return role_analysis
+
+def get_team_formation_performance(df):
+    """Analyze performance of different team combinations"""
+    if df.empty:
+        return {}
+    
+    team_matches = df[df['game_mode'] == 'Team']
+    if team_matches.empty:
+        return {}
+    
+    formation_stats = {}
+    
+    # Group by match and analyze team formations
+    for match_id in team_matches['match_id'].unique():
+        match_data = team_matches[team_matches['match_id'] == match_id]
+        teams = match_data['team'].unique()
+        
+        for team in teams:
+            team_players = match_data[match_data['team'] == team]['player_name'].tolist()
+            team_players.sort()  # Sort for consistent key generation
+            formation_key = tuple(team_players)
+            
+            if len(formation_key) >= 2:  # Only consider formations with 2+ players
+                if formation_key not in formation_stats:
+                    formation_stats[formation_key] = {
+                        'matches': 0,
+                        'wins': 0,
+                        'total_kills': 0,
+                        'total_score': 0,
+                        'players': list(formation_key)
+                    }
+                
+                formation_stats[formation_key]['matches'] += 1
+                formation_stats[formation_key]['total_kills'] += match_data[match_data['team'] == team]['kills'].sum()
+                formation_stats[formation_key]['total_score'] += match_data[match_data['team'] == team]['score'].sum()
+                
+                # Determine if team won
+                team_score = match_data[match_data['team'] == team]['score'].sum()
+                other_teams = match_data[match_data['team'] != team]
+                
+                if not other_teams.empty:
+                    other_team_scores = other_teams.groupby('team')['score'].sum()
+                    max_other_score = other_team_scores.max()
+                    if team_score > max_other_score:
+                        formation_stats[formation_key]['wins'] += 1
+    
+    # Calculate win rates and performance metrics
+    for formation_key, stats in formation_stats.items():
+        if stats['matches'] > 0:
+            stats['win_rate'] = round((stats['wins'] / stats['matches']) * 100, 1)
+            stats['avg_kills_per_match'] = round(stats['total_kills'] / stats['matches'], 1)
+            stats['avg_score_per_match'] = round(stats['total_score'] / stats['matches'], 1)
+            stats['formation_size'] = len(stats['players'])
+    
+    # Sort by win rate and filter for formations with multiple matches
+    sorted_formations = {k: v for k, v in formation_stats.items() if v['matches'] >= 2}
+    sorted_formations = dict(sorted(sorted_formations.items(), 
+                                   key=lambda x: x[1]['win_rate'], reverse=True))
+    
+    return sorted_formations 
+
+def get_battle_royale_rankings(df):
+    """Create battle royale style tournament bracket rankings"""
+    if df.empty:
+        return {}
+    
+    # Get player stats for ranking
+    players = df['player_name'].unique()
+    player_rankings = []
+    
+    for player in players:
+        player_stats = get_player_stats(df, player)
+        if player_stats:
+            # Calculate ranking score (weighted combination of stats)
+            ranking_score = (
+                player_stats['kd_ratio'] * 0.3 +
+                player_stats['win_rate'] * 0.3 +
+                player_stats['kills_per_minute'] * 0.2 +
+                player_stats['total_matches'] * 0.1 +
+                player_stats['assists_per_minute'] * 0.1
+            )
+            
+            player_rankings.append({
+                'player_name': player,
+                'ranking_score': ranking_score,
+                'kd_ratio': player_stats['kd_ratio'],
+                'win_rate': player_stats['win_rate'],
+                'kills_per_minute': player_stats['kills_per_minute'],
+                'total_matches': player_stats['total_matches'],
+                'assists_per_minute': player_stats['assists_per_minute'],
+                'total_kills': player_stats['total_kills'],
+                'total_score': player_stats['total_score']
+            })
+    
+    # Sort by ranking score
+    player_rankings.sort(key=lambda x: x['ranking_score'], reverse=True)
+    
+    # Assign tiers
+    tiers = {
+        'Champion': player_rankings[:1] if player_rankings else [],
+        'Elite': player_rankings[1:3] if len(player_rankings) > 1 else [],
+        'Veteran': player_rankings[3:6] if len(player_rankings) > 3 else [],
+        'Rookie': player_rankings[6:10] if len(player_rankings) > 6 else [],
+        'Novice': player_rankings[10:] if len(player_rankings) > 10 else []
+    }
+    
+    return {
+        'rankings': player_rankings,
+        'tiers': tiers,
+        'total_players': len(player_rankings)
+    }
+
+def get_achievement_badges(df):
+    """Generate achievement badges for players"""
+    if df.empty:
+        return {}
+    
+    players = df['player_name'].unique()
+    achievements = {}
+    
+    # Define achievement criteria
+    achievement_criteria = {
+        'Sharpshooter': {'metric': 'kd_ratio', 'threshold': 2.0, 'description': 'K/D ratio above 2.0'},
+        'Kill Master': {'metric': 'total_kills', 'threshold': 100, 'description': '100+ total kills'},
+        'Survivor': {'metric': 'deaths_per_minute', 'threshold': 0.3, 'description': 'Less than 0.3 deaths per minute', 'reverse': True},
+        'Support Hero': {'metric': 'assists_per_minute', 'threshold': 0.5, 'description': '0.5+ assists per minute'},
+        'Winner': {'metric': 'win_rate', 'threshold': 70, 'description': '70%+ win rate'},
+        'Veteran': {'metric': 'total_matches', 'threshold': 20, 'description': '20+ matches played'},
+        'Speed Demon': {'metric': 'kills_per_minute', 'threshold': 1.0, 'description': '1.0+ kills per minute'},
+        'Consistent': {'metric': 'total_matches', 'threshold': 10, 'description': '10+ matches played'},
+        'Elite': {'metric': 'ranking_score', 'threshold': 80, 'description': 'Elite tier ranking'},
+        'Champion': {'metric': 'ranking_score', 'threshold': 90, 'description': 'Champion tier ranking'}
+    }
+    
+    for player in players:
+        player_stats = get_player_stats(df, player)
+        if player_stats:
+            player_achievements = []
+            
+            # Calculate ranking score for elite/champion badges
+            ranking_score = (
+                player_stats['kd_ratio'] * 0.3 +
+                player_stats['win_rate'] * 0.3 +
+                player_stats['kills_per_minute'] * 0.2 +
+                player_stats['total_matches'] * 0.1 +
+                player_stats['assists_per_minute'] * 0.1
+            )
+            player_stats['ranking_score'] = ranking_score
+            
+            for badge_name, criteria in achievement_criteria.items():
+                metric_value = player_stats.get(criteria['metric'], 0)
+                threshold = criteria['threshold']
+                
+                if criteria.get('reverse', False):
+                    # For metrics where lower is better (like deaths per minute)
+                    if metric_value <= threshold:
+                        player_achievements.append({
+                            'name': badge_name,
+                            'description': criteria['description'],
+                            'unlocked': True,
+                            'progress': 100
+                        })
+                    else:
+                        progress = max(0, min(100, (threshold / metric_value) * 100))
+                        player_achievements.append({
+                            'name': badge_name,
+                            'description': criteria['description'],
+                            'unlocked': False,
+                            'progress': progress
+                        })
+                else:
+                    # For metrics where higher is better
+                    if metric_value >= threshold:
+                        player_achievements.append({
+                            'name': badge_name,
+                            'description': criteria['description'],
+                            'unlocked': True,
+                            'progress': 100
+                        })
+                    else:
+                        progress = max(0, min(100, (metric_value / threshold) * 100))
+                        player_achievements.append({
+                            'name': badge_name,
+                            'description': criteria['description'],
+                            'unlocked': False,
+                            'progress': progress
+                        })
+            
+            achievements[player] = {
+                'achievements': player_achievements,
+                'unlocked_count': sum(1 for a in player_achievements if a['unlocked']),
+                'total_achievements': len(player_achievements)
+            }
+    
+    return achievements
+
+def get_gaming_session_analysis(df):
+    """Analyze performance patterns over time and gaming sessions"""
+    if df.empty:
+        return {}
+    
+    # Group by date and analyze daily patterns
+    df['date'] = df['datetime'].dt.date
+    daily_stats = df.groupby('date').agg({
+        'match_id': 'nunique',
+        'kills': 'sum',
+        'deaths': 'sum',
+        'assists': 'sum',
+        'score': 'sum',
+        'player_name': 'nunique'
+    }).reset_index()
+    
+    # Calculate daily performance metrics
+    daily_stats['kd_ratio'] = daily_stats.apply(
+        lambda row: row['kills'] / row['deaths'] if row['deaths'] > 0 else row['kills'], axis=1
+    )
+    daily_stats['avg_score_per_match'] = daily_stats['score'] / daily_stats['match_id']
+    daily_stats['avg_kills_per_match'] = daily_stats['kills'] / daily_stats['match_id']
+    
+    # Identify gaming sessions (consecutive days with matches)
+    daily_stats = daily_stats.sort_values('date')
+    daily_stats['session_id'] = 0
+    session_id = 0
+    
+    for i in range(len(daily_stats)):
+        if i == 0:
+            session_id += 1
+        else:
+            days_diff = (daily_stats.iloc[i]['date'] - daily_stats.iloc[i-1]['date']).days
+            if days_diff > 1:  # Gap of more than 1 day starts new session
+                session_id += 1
+        daily_stats.iloc[i, daily_stats.columns.get_loc('session_id')] = session_id
+    
+    # Analyze session patterns
+    session_analysis = {}
+    for session_id in daily_stats['session_id'].unique():
+        session_data = daily_stats[daily_stats['session_id'] == session_id]
+        
+        session_analysis[session_id] = {
+            'start_date': session_data['date'].min(),
+            'end_date': session_data['date'].max(),
+            'duration_days': (session_data['date'].max() - session_data['date'].min()).days + 1,
+            'total_matches': session_data['match_id'].sum(),
+            'total_kills': session_data['kills'].sum(),
+            'avg_kd_ratio': session_data['kd_ratio'].mean(),
+            'avg_score_per_match': session_data['avg_score_per_match'].mean(),
+            'peak_performance_day': session_data.loc[session_data['kd_ratio'].idxmax(), 'date'],
+            'peak_kd_ratio': session_data['kd_ratio'].max()
+        }
+    
+    # Calculate time-based patterns
+    df['hour'] = df['datetime'].dt.hour
+    hourly_performance = df.groupby('hour').agg({
+        'kills': 'mean',
+        'deaths': 'mean',
+        'score': 'mean',
+        'match_id': 'count'
+    }).reset_index()
+    
+    hourly_performance['kd_ratio'] = hourly_performance.apply(
+        lambda row: row['kills'] / row['deaths'] if row['deaths'] > 0 else row['kills'], axis=1
+    )
+    
+    return {
+        'daily_stats': daily_stats.to_dict('records'),
+        'session_analysis': session_analysis,
+        'hourly_performance': hourly_performance.to_dict('records'),
+        'total_sessions': len(session_analysis),
+        'avg_session_duration': sum(s['duration_days'] for s in session_analysis.values()) / len(session_analysis) if session_analysis else 0
+    } 

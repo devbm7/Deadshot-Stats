@@ -76,6 +76,64 @@ The Advanced Analytics page provides deep insights into player performance patte
 - **Usage Patterns**: Most popular weapon choices per map
 - **Performance Correlation**: Weapon effectiveness vs map characteristics
 
+## **Team Analysis**
+
+The Team Analysis page provides comprehensive insights into team performance and dynamics:
+
+### **Team Performance**
+- **Team Statistics**: Win rates, total kills, average scores per team
+- **Team Comparison**: Visual comparison of team performance metrics
+- **Team Details**: Expandable sections with detailed team statistics
+
+### **Team Dynamics**
+- **Team Chemistry Matrix**: Heatmap showing win rates when players team up together
+- **Player Role Analysis**: Radar chart showing each player's strengths and primary role
+- **Team Formation Performance**: Bubble chart showing how different team combinations perform
+
+### **Player Roles**
+- **Killer**: High K/D ratio and kill rate - primary damage dealer
+- **Support**: High assist rate with low deaths - team support player
+- **Aggressive**: High death rate - aggressive but risky playstyle
+- **Leader**: High win rate with good K/D - team leader
+- **Balanced**: Well-rounded player with balanced stats
+
+### **Team Formation Analysis**
+- **Formation Performance**: Win rates and statistics for different player combinations
+- **Formation Size**: Analysis of 2-player, 3-player, and larger team formations
+- **Elite Formations**: Identification of the most successful team combinations
+
+## **Fun & Engaging Features**
+
+The Fun Features page provides gamified elements to make stats tracking more engaging:
+
+### **Battle Royale Rankings**
+- **Tournament-Style Rankings**: Tier-based ranking system with Champion, Elite, Veteran, Rookie, and Novice tiers
+- **Ranking Score**: Weighted combination of K/D ratio, win rate, kills per minute, matches played, and assists
+- **Tier Visualization**: Diamond-shaped markers with color-coded tiers
+- **Player Positioning**: Visual representation of player rankings within each tier
+
+### **Achievement Badges**
+- **Unlockable Achievements**: 10 different badges based on performance milestones
+- **Progress Tracking**: Visual progress bars for each achievement
+- **Badge Categories**:
+  - **Sharpshooter**: K/D ratio above 2.0
+  - **Kill Master**: 100+ total kills
+  - **Survivor**: Less than 0.3 deaths per minute
+  - **Support Hero**: 0.5+ assists per minute
+  - **Winner**: 70%+ win rate
+  - **Veteran**: 20+ matches played
+  - **Speed Demon**: 1.0+ kills per minute
+  - **Consistent**: 10+ matches played
+  - **Elite**: Elite tier ranking
+  - **Champion**: Champion tier ranking
+
+### **Gaming Session Analysis**
+- **Daily Performance**: Track K/D ratio trends over time
+- **Hourly Performance**: Identify best gaming hours
+- **Session Duration**: Analyze gaming session patterns
+- **Session Performance**: Compare performance across different sessions
+- **Peak Performance**: Identify optimal gaming periods
+
 ## 🛠️ Installation
 
 1. **Clone the repository**:

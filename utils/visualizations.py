@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import plotly.subplots as sp
 import pandas as pd
 import numpy as np
-from utils.calculations import get_player_stats, get_weapon_stats, get_map_stats, get_performance_clusters, get_player_streaks, get_player_evolution_timeline
+from utils.calculations import get_player_stats, get_weapon_stats, get_map_stats, get_performance_clusters, get_player_streaks, get_player_evolution_timeline,  get_team_chemistry_matrix, get_player_role_analysis, get_team_formation_performance, get_battle_royale_rankings, get_achievement_badges, get_gaming_session_analysis
 
 def create_overview_cards(df):
     """Create overview statistics cards"""
@@ -752,6 +752,364 @@ def create_streak_analysis_chart(df, player_name):
         yaxis_title='Number of Matches',
         height=400,
         showlegend=False
+    )
+    
+    return fig 
+
+def create_team_chemistry_heatmap(df):
+    """Create heatmap showing team chemistry between players"""
+    if df.empty:
+        return go.Figure()
+    
+    chemistry_matrix = get_team_chemistry_matrix(df)
+    if not chemistry_matrix:
+        return go.Figure()
+    
+    # Prepare data for heatmap
+    players = list(chemistry_matrix.keys())
+    z_data = []
+    text_data = []
+    
+    for player1 in players:
+        row = []
+        text_row = []
+        for player2 in players:
+            if player1 == player2:
+                row.append(None)  # Diagonal
+                text_row.append("")
+            elif chemistry_matrix[player1][player2]:
+                row.append(chemistry_matrix[player1][player2]['chemistry_score'])
+                text_row.append(f"{chemistry_matrix[player1][player2]['win_rate']:.1f}%")
+            else:
+                row.append(None)  # No data
+                text_row.append("")
+        z_data.append(row)
+        text_data.append(text_row)
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=z_data,
+        x=players,
+        y=players,
+        colorscale='RdYlGn',
+        zmid=0.5,
+        text=text_data,
+        texttemplate="%{text}",
+        textfont={"size": 10},
+        hoverongaps=False
+    ))
+    
+    fig.update_layout(
+        title='Team Chemistry Matrix (Win Rate %)',
+        xaxis_title='Player',
+        yaxis_title='Player',
+        height=500,
+        width=500
+    )
+    
+    return fig
+
+def create_role_analysis_chart(df):
+    """Create radar chart showing player roles and strengths"""
+    if df.empty:
+        return go.Figure()
+    
+    role_analysis = get_player_role_analysis(df)
+    if not role_analysis:
+        return go.Figure()
+    
+    # Get unique roles
+    roles = list(set([analysis['primary_role'] for analysis in role_analysis.values()]))
+    role_colors = {
+        'Killer': '#d62728',
+        'Support': '#2ca02c',
+        'Aggressive': '#ff7f0e',
+        'Leader': '#1f77b4',
+        'Balanced': '#9467bd'
+    }
+    
+    fig = go.Figure()
+    
+    for player, analysis in role_analysis.items():
+        role = analysis['primary_role']
+        strengths = analysis['role_strengths']
+        
+        # Create radar chart data
+        categories = ['Killing Power', 'Support Value', 'Survival Rate', 'Winning Ability', 'Consistency']
+        values = [strengths['killing_power'], strengths['support_value'], strengths['survival_rate'], 
+                 strengths['winning_ability'], strengths['consistency']]
+        
+        fig.add_trace(go.Scatterpolar(
+            r=values,
+            theta=categories,
+            fill='toself',
+            name=f"{player} ({role})",
+            line_color=role_colors.get(role, '#666666'),
+            opacity=0.7
+        ))
+    
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 1]
+            )),
+        showlegend=True,
+        title="Player Role Analysis",
+        height=500
+    )
+    
+    return fig
+
+def create_team_formation_chart(df):
+    """Create chart showing team formation performance"""
+    if df.empty:
+        return go.Figure()
+    
+    formation_stats = get_team_formation_performance(df)
+    if not formation_stats:
+        return go.Figure()
+    
+    # Prepare data for visualization
+    formations = []
+    win_rates = []
+    match_counts = []
+    avg_kills = []
+    
+    for formation_key, stats in formation_stats.items():
+        formation_name = " + ".join(stats['players'])
+        formations.append(formation_name)
+        win_rates.append(stats['win_rate'])
+        match_counts.append(stats['matches'])
+        avg_kills.append(stats['avg_kills_per_match'])
+    
+    # Create bubble chart
+    fig = go.Figure(data=[
+        go.Scatter(
+            x=win_rates,
+            y=avg_kills,
+            mode='markers',
+            marker=dict(
+                size=[count * 5 for count in match_counts],  # Size based on match count
+                color=win_rates,
+                colorscale='RdYlGn',
+                showscale=True,
+                colorbar=dict(title="Win Rate %")
+            ),
+            text=formations,
+            hovertemplate='<b>%{text}</b><br>Win Rate: %{x:.1f}%<br>Avg Kills: %{y:.1f}<br>Matches: %{marker.size}<extra></extra>'
+        )
+    ])
+    
+    fig.update_layout(
+        title='Team Formation Performance',
+        xaxis_title='Win Rate (%)',
+        yaxis_title='Average Kills per Match',
+        height=500,
+        showlegend=False
+    )
+    
+    return fig 
+
+def create_battle_royale_rankings_chart(df):
+    """Create battle royale style tournament bracket visualization"""
+    if df.empty:
+        return go.Figure()
+    
+    rankings_data = get_battle_royale_rankings(df)
+    if not rankings_data:
+        return go.Figure()
+    
+    tiers = rankings_data['tiers']
+    tier_colors = {
+        'Champion': '#FFD700',  # Gold
+        'Elite': '#C0C0C0',     # Silver
+        'Veteran': '#CD7F32',   # Bronze
+        'Rookie': '#4CAF50',    # Green
+        'Novice': '#2196F3'     # Blue
+    }
+    
+    fig = go.Figure()
+    
+    # Create tier visualization
+    y_positions = {'Champion': 5, 'Elite': 4, 'Veteran': 3, 'Rookie': 2, 'Novice': 1}
+    
+    for tier_name, players in tiers.items():
+        if players:
+            x_positions = list(range(len(players)))
+            y_pos = [y_positions[tier_name]] * len(players)
+            
+            fig.add_trace(go.Scatter(
+                x=x_positions,
+                y=y_pos,
+                mode='markers+text',
+                marker=dict(
+                    size=20,
+                    color=tier_colors[tier_name],
+                    symbol='diamond'
+                ),
+                text=[p['player_name'] for p in players],
+                textposition='middle center',
+                name=tier_name,
+                hovertemplate='<b>%{text}</b><br>Ranking Score: %{customdata}<br>Tier: ' + tier_name + '<extra></extra>',
+                customdata=[f"{p['ranking_score']:.1f}" for p in players]
+            ))
+    
+    fig.update_layout(
+        title='🏆 Battle Royale Rankings',
+        xaxis_title='Player Position',
+        yaxis_title='Tier',
+        yaxis=dict(
+            tickmode='array',
+            tickvals=list(y_positions.values()),
+            ticktext=list(y_positions.keys()),
+            range=[0.5, 5.5]
+        ),
+        height=400,
+        showlegend=True
+    )
+    
+    return fig
+
+def create_achievement_badges_chart(df):
+    """Create achievement badges visualization"""
+    if df.empty:
+        return go.Figure()
+    
+    achievements_data = get_achievement_badges(df)
+    if not achievements_data:
+        return go.Figure()
+    
+    # Prepare data for visualization
+    players = list(achievements_data.keys())
+    unlocked_counts = [achievements_data[p]['unlocked_count'] for p in players]
+    total_achievements = achievements_data[players[0]]['total_achievements']
+    
+    fig = go.Figure(data=[
+        go.Bar(
+            x=players,
+            y=unlocked_counts,
+            marker_color=['#4CAF50' if count == total_achievements else '#FFC107' if count > total_achievements/2 else '#F44336' for count in unlocked_counts],
+            text=unlocked_counts,
+            textposition='auto',
+            hovertemplate='<b>%{x}</b><br>Achievements: %{y}/' + str(total_achievements) + '<extra></extra>'
+        )
+    ])
+    
+    fig.update_layout(
+        title='🏅 Achievement Badges Progress',
+        xaxis_title='Player',
+        yaxis_title='Achievements Unlocked',
+        height=400,
+        showlegend=False
+    )
+    
+    return fig
+
+def create_gaming_session_analysis_chart(df):
+    """Create gaming session analysis visualization"""
+    if df.empty:
+        return go.Figure()
+    
+    session_data = get_gaming_session_analysis(df)
+    if not session_data:
+        return go.Figure()
+    
+    # Create subplots for different analyses
+    fig = sp.make_subplots(
+        rows=2, cols=2,
+        subplot_titles=('Daily Performance', 'Hourly Performance', 'Session Duration', 'Session Performance'),
+        specs=[[{"type": "scatter"}, {"type": "bar"}],
+               [{"type": "bar"}, {"type": "scatter"}]]
+    )
+    
+    # Daily performance
+    daily_stats = session_data['daily_stats']
+    if daily_stats:
+        dates = [d['date'] for d in daily_stats]
+        kd_ratios = [d['kd_ratio'] for d in daily_stats]
+        
+        fig.add_trace(
+            go.Scatter(x=dates, y=kd_ratios, mode='lines+markers', name='Daily K/D', line=dict(color='#1f77b4')),
+            row=1, col=1
+        )
+    
+    # Hourly performance
+    hourly_data = session_data['hourly_performance']
+    if hourly_data:
+        hours = [h['hour'] for h in hourly_data]
+        avg_kills = [h['kills'] for h in hourly_data]
+        
+        fig.add_trace(
+            go.Bar(x=hours, y=avg_kills, name='Avg Kills/Hour', marker_color='#ff7f0e'),
+            row=1, col=2
+        )
+    
+    # Session duration
+    session_analysis = session_data['session_analysis']
+    if session_analysis:
+        session_ids = list(session_analysis.keys())
+        durations = [session_analysis[sid]['duration_days'] for sid in session_ids]
+        
+        fig.add_trace(
+            go.Bar(x=[f"Session {sid}" for sid in session_ids], y=durations, name='Session Duration', marker_color='#2ca02c'),
+            row=2, col=1
+        )
+    
+    # Session performance
+    if session_analysis:
+        session_ids = list(session_analysis.keys())
+        avg_kd_ratios = [session_analysis[sid]['avg_kd_ratio'] for sid in session_ids]
+        
+        fig.add_trace(
+            go.Scatter(x=[f"Session {sid}" for sid in session_ids], y=avg_kd_ratios, mode='markers', name='Session K/D', marker=dict(size=10, color='#d62728')),
+            row=2, col=2
+        )
+    
+    fig.update_layout(
+        title='🎮 Gaming Session Analysis',
+        height=600,
+        showlegend=True
+    )
+    
+    return fig
+
+def create_achievement_details(df, player_name):
+    """Create detailed achievement progress for a specific player"""
+    if df.empty or not player_name:
+        return go.Figure()
+    
+    achievements_data = get_achievement_badges(df)
+    if not achievements_data or player_name not in achievements_data:
+        return go.Figure()
+    
+    player_achievements = achievements_data[player_name]['achievements']
+    
+    # Prepare data for visualization
+    badge_names = [a['name'] for a in player_achievements]
+    progress_values = [a['progress'] for a in player_achievements]
+    unlocked = [a['unlocked'] for a in player_achievements]
+    
+    # Color coding
+    colors = ['#4CAF50' if unlocked else '#FFC107' for unlocked in unlocked]
+    
+    fig = go.Figure(data=[
+        go.Bar(
+            x=badge_names,
+            y=progress_values,
+            marker_color=colors,
+            text=[f"{p:.0f}%" for p in progress_values],
+            textposition='auto',
+            hovertemplate='<b>%{x}</b><br>Progress: %{y:.1f}%<extra></extra>'
+        )
+    ])
+    
+    fig.update_layout(
+        title=f'🏅 {player_name} Achievement Progress',
+        xaxis_title='Achievement',
+        yaxis_title='Progress (%)',
+        height=400,
+        showlegend=False,
+        yaxis=dict(range=[0, 100])
     )
     
     return fig 

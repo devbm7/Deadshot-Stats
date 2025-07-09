@@ -17,14 +17,19 @@ from utils.data_processing import (
 from utils.calculations import (
     get_player_stats, get_team_stats, get_leaderboard_data, get_weapon_stats,
     get_map_stats, get_recent_activity, get_match_summary, get_player_evolution_timeline,
-    get_performance_clusters, get_player_streaks
+    get_performance_clusters, get_player_streaks, get_team_chemistry_matrix,
+    get_player_role_analysis, get_team_formation_performance, get_battle_royale_rankings,
+    get_achievement_badges, get_gaming_session_analysis
 )
 from utils.visualizations import (
     create_overview_cards, create_kd_leaderboard_chart, create_player_performance_trend,
     create_weapon_usage_chart, create_map_performance_chart, create_team_performance_chart,
     create_player_comparison_radar, create_match_timeline, create_ping_impact_chart,
     create_mode_wise_analysis, create_map_wise_analysis, create_weapon_map_analysis,
-    create_player_evolution_chart, create_performance_clusters_chart, create_streak_analysis_chart
+    create_player_evolution_chart, create_performance_clusters_chart, create_streak_analysis_chart,
+    create_team_chemistry_heatmap, create_role_analysis_chart, create_team_formation_chart,
+    create_battle_royale_rankings_chart, create_achievement_badges_chart, create_gaming_session_analysis_chart,
+    create_achievement_details
 )
 
 # Page configuration
@@ -74,7 +79,7 @@ st.sidebar.title("🎯 Deadshot Stats")
 page = st.sidebar.selectbox(
     "Navigation",
     ["🏠 Dashboard", "📊 Player Analysis", "👥 Team Analysis", "📈 Match History", 
-     "🎮 Data Input", "🔧 Advanced Analytics", "📋 Leaderboards"]
+     "🎮 Data Input", "🔧 Advanced Analytics", "📋 Leaderboards", "🎉 Fun Features"]
 )
 
 # Load data
@@ -213,7 +218,72 @@ elif page == "👥 Team Analysis":
                     st.metric("Total Kills", stats['total_kills'])
                 with col4:
                     st.metric("Avg Score", stats['avg_score_per_match'])
-    else:
+    
+    # Team Dynamics Analysis
+    st.header("🔗 Team Dynamics")
+    
+    # Team Chemistry Matrix
+    st.subheader("🧪 Team Chemistry Matrix")
+    st.write("Shows win rates when players team up together. Green = high win rate, Red = low win rate.")
+    chemistry_fig = create_team_chemistry_heatmap(df)
+    st.plotly_chart(chemistry_fig, use_container_width=True, key="team_chemistry_heatmap")
+    
+    # Role Analysis
+    st.subheader("🎭 Player Role Analysis")
+    st.write("Radar chart showing each player's strengths and their primary role in the team.")
+    role_fig = create_role_analysis_chart(df)
+    st.plotly_chart(role_fig, use_container_width=True, key="role_analysis_chart")
+    
+    # Show role details
+    role_analysis = get_player_role_analysis(df)
+    if role_analysis:
+        st.write("**Player Roles:**")
+        for player, analysis in role_analysis.items():
+            with st.expander(f"{player} - {analysis['primary_role']}"):
+                st.write(f"**Role:** {analysis['primary_role']}")
+                st.write(f"**Description:** {analysis['role_description']}")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("**Stats:**")
+                    st.write(f"• K/D Ratio: {analysis['stats']['kd_ratio']:.2f}")
+                    st.write(f"• Kills/Min: {analysis['stats']['kills_per_minute']:.2f}")
+                    st.write(f"• Assists/Min: {analysis['stats']['assists_per_minute']:.2f}")
+                with col2:
+                    st.write("**Strengths:**")
+                    st.write(f"• Killing Power: {analysis['role_strengths']['killing_power']:.1%}")
+                    st.write(f"• Support Value: {analysis['role_strengths']['support_value']:.1%}")
+                    st.write(f"• Survival Rate: {analysis['role_strengths']['survival_rate']:.1%}")
+    
+    # Team Formation Performance
+    st.subheader("🏆 Team Formation Performance")
+    st.write("Bubble chart showing how different team combinations perform. Size = number of matches, Color = win rate.")
+    formation_fig = create_team_formation_chart(df)
+    st.plotly_chart(formation_fig, use_container_width=True, key="team_formation_chart")
+    
+    # Show formation details
+    formation_stats = get_team_formation_performance(df)
+    if formation_stats:
+        st.write("**Top Team Formations:**")
+        for i, (formation_key, stats) in enumerate(formation_stats.items()):
+            if i < 5:  # Show top 5 formations
+                with st.expander(f"Formation {i+1}: {' + '.join(stats['players'])}"):
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Win Rate", f"{stats['win_rate']}%")
+                        st.metric("Matches", stats['matches'])
+                    with col2:
+                        st.metric("Avg Kills", f"{stats['avg_kills_per_match']:.1f}")
+                        st.metric("Avg Score", f"{stats['avg_score_per_match']:.1f}")
+                    with col3:
+                        st.write("**Formation Size:**", stats['formation_size'])
+                        if stats['win_rate'] > 70:
+                            st.success("Elite Formation")
+                        elif stats['win_rate'] > 50:
+                            st.info("Good Formation")
+                        else:
+                            st.warning("Needs Improvement")
+    
+    if not team_stats and not formation_stats:
         st.info("No team data available. Team matches will appear here.")
 
 # Match History Page
@@ -611,6 +681,107 @@ elif page == "📋 Leaderboards":
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No data available for leaderboards.")
+
+# Fun Features Page
+elif page == "🎉 Fun Features":
+    st.title("🎉 Fun & Engaging Features")
+    
+    # Battle Royale Rankings
+    st.header("🏆 Battle Royale Rankings")
+    st.write("Tournament-style rankings with tier system based on overall performance.")
+    
+    rankings_fig = create_battle_royale_rankings_chart(df)
+    st.plotly_chart(rankings_fig, use_container_width=True, key="battle_royale_rankings")
+    
+    # Show ranking details
+    rankings_data = get_battle_royale_rankings(df)
+    if rankings_data:
+        st.write("**Tier System:**")
+        for tier_name, players in rankings_data['tiers'].items():
+            if players:
+                with st.expander(f"{tier_name} Tier ({len(players)} players)"):
+                    for i, player in enumerate(players):
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.write(f"**{i+1}.** {player['player_name']}")
+                        with col2:
+                            st.write(f"Score: {player['ranking_score']:.1f}")
+                        with col3:
+                            st.write(f"K/D: {player['kd_ratio']:.2f}")
+    
+    # Achievement Badges
+    st.header("🏅 Achievement Badges")
+    st.write("Unlockable achievements based on performance milestones.")
+    
+    badges_fig = create_achievement_badges_chart(df)
+    st.plotly_chart(badges_fig, use_container_width=True, key="achievement_badges")
+    
+    # Show achievement details for selected player
+    players = get_unique_players(df)
+    if players:
+        selected_player_achievements = st.selectbox(
+            "Select player to view achievements:",
+            options=players,
+            key="achievement_player"
+        )
+        
+        if selected_player_achievements:
+            achievement_details_fig = create_achievement_details(df, selected_player_achievements)
+            st.plotly_chart(achievement_details_fig, use_container_width=True, key="achievement_details")
+            
+            # Show achievement list
+            achievements_data = get_achievement_badges(df)
+            if achievements_data and selected_player_achievements in achievements_data:
+                player_achievements = achievements_data[selected_player_achievements]['achievements']
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("**Unlocked Achievements:**")
+                    for achievement in player_achievements:
+                        if achievement['unlocked']:
+                            st.success(f"✅ {achievement['name']} - {achievement['description']}")
+                
+                with col2:
+                    st.write("**In Progress:**")
+                    for achievement in player_achievements:
+                        if not achievement['unlocked']:
+                            st.info(f"🔄 {achievement['name']} - {achievement['progress']:.0f}%")
+    
+    # Gaming Session Analysis
+    st.header("🎮 Gaming Session Analysis")
+    st.write("Analyze performance patterns over time and identify optimal gaming sessions.")
+    
+    session_fig = create_gaming_session_analysis_chart(df)
+    st.plotly_chart(session_fig, use_container_width=True, key="gaming_session_analysis")
+    
+    # Show session insights
+    session_data = get_gaming_session_analysis(df)
+    if session_data:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Sessions", session_data['total_sessions'])
+        with col2:
+            st.metric("Avg Session Duration", f"{session_data['avg_session_duration']:.1f} days")
+        with col3:
+            if session_data['hourly_performance']:
+                best_hour = max(session_data['hourly_performance'], key=lambda x: x['kills'])
+                st.metric("Best Gaming Hour", f"{best_hour['hour']}:00")
+        
+        # Show session details
+        if session_data['session_analysis']:
+            st.write("**Session Details:**")
+            for session_id, session_info in session_data['session_analysis'].items():
+                with st.expander(f"Session {session_id} ({session_info['duration_days']} days)"):
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.write(f"**Period:** {session_info['start_date']} to {session_info['end_date']}")
+                        st.write(f"**Matches:** {session_info['total_matches']}")
+                    with col2:
+                        st.write(f"**Avg K/D:** {session_info['avg_kd_ratio']:.2f}")
+                        st.write(f"**Total Kills:** {session_info['total_kills']}")
+                    with col3:
+                        st.write(f"**Peak Day:** {session_info['peak_performance_day']}")
+                        st.write(f"**Peak K/D:** {session_info['peak_kd_ratio']:.2f}")
 
 # Footer
 st.sidebar.markdown("---")
