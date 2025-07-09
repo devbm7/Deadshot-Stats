@@ -131,6 +131,58 @@ if page == "🏠 Dashboard":
         with col2:
             st.metric("Recent Kills", recent_activity['recent_kills'])
     
+
+    # Player Stats Table
+    st.subheader("📊 All Players Stats Table")
+    players = get_unique_players(df)
+    
+    if players:
+        # Get all player stats
+        all_player_stats = []
+        for player in players:
+            player_stats = get_player_stats(df, player)
+            if player_stats:
+                all_player_stats.append({
+                    'Player': player,
+                    'K/D Ratio': round(player_stats['kd_ratio'], 2),
+                    'Win Rate (%)': round(player_stats['win_rate'], 1),
+                    'Kills/Min': round(player_stats['kills_per_minute'], 2),
+                    'Deaths/Min': round(player_stats['deaths_per_minute'], 2),
+                    'Assists/Min': round(player_stats['assists_per_minute'], 2),
+                    'Score/Min': round(player_stats['score_per_minute'], 2),
+                    'Total Matches': player_stats['total_matches'],
+                    'Total Kills': player_stats['total_kills'],
+                    'Total Assists': player_stats['total_assists'],
+                    'Total Score': player_stats['total_score'],
+                    'Wins': player_stats['wins'],
+                    'Losses': player_stats['losses'],
+                    'Total Time (min)': player_stats['total_minutes'],
+                    'Best Match Kills': player_stats['best_match_kills'],
+                    'Best Match Score': player_stats['best_match_score'],
+                    'Favorite Weapon': player_stats['favorite_weapon']
+                })
+        
+        # Create DataFrame and sort by K/D ratio
+        player_df = pd.DataFrame(all_player_stats)
+        player_df = player_df.sort_values('K/D Ratio', ascending=False)
+        
+        # Add rank column
+        player_df.insert(0, 'Rank', range(1, len(player_df) + 1))
+        
+        # Display the table
+        st.dataframe(player_df, use_container_width=True)
+        
+        # Add download button
+        csv = player_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Player Stats as CSV",
+            data=csv,
+            file_name="player_stats.csv",
+            mime="text/csv"
+        )
+    else:
+        st.info("No player data available. Add some matches first!")
+
     # Charts
     col1, col2 = st.columns(2)
     
@@ -139,9 +191,12 @@ if page == "🏠 Dashboard":
     
     with col2:
         st.plotly_chart(create_weapon_usage_chart(df), use_container_width=True, key="weapon_usage_chart")
-    
+
+
+
     # Match timeline
     st.plotly_chart(create_match_timeline(df), use_container_width=True, key="match_timeline")
+    
 
 # Player Analysis Page
 elif page == "📊 Player Analysis":
@@ -953,4 +1008,113 @@ if not df.empty:
     st.sidebar.markdown(f"• {len(df['match_id'].unique())} matches")
     st.sidebar.markdown(f"• {df['kills'].sum()} total kills")
 else:
-    st.sidebar.markdown("No data loaded yet.") 
+    st.sidebar.markdown("No data loaded yet.")
+
+# App Information
+st.sidebar.markdown("---")
+st.sidebar.markdown("**📚 App Information**")
+
+# Feature explanations
+with st.sidebar.expander("🏆 Achievement Requirements"):
+    st.markdown("""
+    **Sharpshooter**: K/D ratio above 2.0\n
+    **Kill Master**: 100+ total kills\n
+    **Survivor**: Less than 0.3 deaths per minute\n
+    **Support Hero**: 0.5+ assists per minute\n
+    **Winner**: 70%+ win rate\n
+    **Veteran**: 20+ matches played\n
+    **Speed Demon**: 1.0+ kills per minute\n
+    **Consistent**: 10+ matches played\n
+    **Elite**: Elite tier ranking\n
+    **Champion**: Champion tier ranking\n
+    """)
+
+with st.sidebar.expander("📊 Player Analysis Features"):
+    st.markdown("""
+    **K/D Ratio**: Kills ÷ Deaths\n
+    **Win Rate**: (Wins ÷ Total Matches) × 100\n
+    **Per-Minute Metrics**: Normalized by match length to avoid bias\n
+    **Player Evolution**: Moving averages over time\n
+    **Performance Clusters**: Machine learning grouping by play style\n
+    **Streak Analysis**: Win/loss patterns and trends\n
+    """)
+
+with st.sidebar.expander("👥 Team Analysis Features"):
+    st.markdown("""
+    **Team Chemistry**: Win rates when players team up\n
+    **Player Roles**: Killer, Support, Aggressive, Leader, Balanced\n
+    **Team Formation**: Performance of different combinations\n
+    **Synergy Score**: Based on role diversity and combinations\n
+    **Win Prediction**: Based on team stats and synergy\n
+    """)
+
+with st.sidebar.expander("🎯 Battle Royale Rankings"):
+    st.markdown("""
+    **Ranking Score**: Weighted combination of:
+    • K/D ratio (30%)
+    • Win rate (30%)
+    • Kills per minute (20%)
+    • Matches played (10%) 
+    • Assists per minute (10%)
+    
+    **Tiers**: Champion, Elite, Veteran, Rookie, Novice
+    """)
+
+with st.sidebar.expander("🎛️ Interactive Features"):
+    st.markdown("""
+    **Player Comparison**: Side-by-side stats with sliders\n
+    **Scenario Simulator**: "What if" team compositions\n
+    **Optimal Team Finder**: Best combinations from available players\n
+    **Custom Scenarios**: Adjust player stats to see impact\n
+    """)
+
+with st.sidebar.expander("📈 Advanced Analytics"):
+    st.markdown("""
+    **Player Evolution**: Performance trends over time\n
+    **Performance Clusters**: ML-based player grouping\n
+    **Streak Analysis**: Win/loss patterns\n
+    **Mode Analysis**: Team vs FFA performance\n
+    **Map Analysis**: Performance across different maps\n
+    **Weapon-Map Analysis**: Weapon effectiveness by map\n
+    """)
+
+with st.sidebar.expander("🎮 Gaming Session Analysis"):
+    st.markdown("""
+    **Daily Performance**: K/D trends over time\n
+    **Hourly Performance**: Best gaming hours\n
+    **Session Duration**: Gaming session patterns\n
+    **Session Performance**: Compare different sessions\n
+    **Peak Performance**: Optimal gaming periods\n
+    """)
+
+with st.sidebar.expander("📋 Data Input Guide"):
+    st.markdown("""
+    **Match Length**: 5, 10, or 20 minutes\n
+    **Game Modes**: Team or FFA\n
+    **Team Matches**: Include assists and team assignments\n
+    **FFA Matches**: Individual performance only\n
+    **Weapons**: Track weapon usage per match\n
+    **Ping**: Optional network performance\n
+    **Coins**: Optional currency tracking\n
+    """)
+
+with st.sidebar.expander("🔧 Technical Details"):
+    st.markdown("""
+    **Data Storage**: CSV format for persistence\n
+    **Normalization**: All stats normalized by match length\n
+    **Win Calculation**: \n
+    • Team: Highest team score wins\n
+    • FFA: Highest individual score wins\n
+    **Role Classification**: Based on K/D, kills/min, assists/min\n
+    **Synergy Calculation**: Role diversity + specific combinations\n
+    """)
+
+# Tips and tricks
+with st.sidebar.expander("💡 Tips & Tricks"):
+    st.markdown("""
+    **📊 Dashboard**: Quick overview with player stats table\n
+    **📈 Match History**: Filter by date, players, or game mode\n
+    **🎛️ Interactive**: Test different team compositions\n
+    **🏆 Fun Features**: Track achievements and rankings\n
+    **📥 Export**: Download data for external analysis\n
+    """) 
