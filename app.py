@@ -47,9 +47,17 @@ st.markdown("""
         padding: 1rem;
         border-radius: 0.5rem;
         border-left: 4px solid #1f77b4;
+        color: #000000;
     }
     .sidebar .sidebar-content {
         background-color: #f8f9fa;
+    }
+    /* Dark mode compatibility */
+    @media (prefers-color-scheme: dark) {
+        .metric-card {
+            background-color: #2d3748;
+            color: #ffffff;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -76,7 +84,7 @@ if page == "🏠 Dashboard":
     # Overview cards
     overview_stats = create_overview_cards(df)
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown(f"""
@@ -97,14 +105,6 @@ if page == "🏠 Dashboard":
     with col3:
         st.markdown(f"""
         <div class="metric-card">
-            <h3>Active Players</h3>
-            <h2>{overview_stats['total_players']}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col4:
-        st.markdown(f"""
-        <div class="metric-card">
             <h3>Avg K/D Ratio</h3>
             <h2>{overview_stats['avg_kd_ratio']}</h2>
         </div>
@@ -115,25 +115,23 @@ if page == "🏠 Dashboard":
     recent_activity = get_recent_activity(df)
     
     if recent_activity:
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
             st.metric("Recent Matches", recent_activity['recent_matches'])
         with col2:
-            st.metric("Active Players", recent_activity['recent_players'])
-        with col3:
             st.metric("Recent Kills", recent_activity['recent_kills'])
     
     # Charts
     col1, col2 = st.columns(2)
     
     with col1:
-        st.plotly_chart(create_kd_leaderboard_chart(df), use_container_width=True)
+        st.plotly_chart(create_kd_leaderboard_chart(df), use_container_width=True, key="kd_leaderboard_chart")
     
     with col2:
-        st.plotly_chart(create_weapon_usage_chart(df), use_container_width=True)
+        st.plotly_chart(create_weapon_usage_chart(df), use_container_width=True, key="weapon_usage_chart")
     
     # Match timeline
-    st.plotly_chart(create_match_timeline(df), use_container_width=True)
+    st.plotly_chart(create_match_timeline(df), use_container_width=True, key="match_timeline")
 
 # Player Analysis Page
 elif page == "📊 Player Analysis":
@@ -154,15 +152,13 @@ elif page == "📊 Player Analysis":
                 with col1:
                     st.metric("K/D Ratio", f"{player_stats['kd_ratio']}")
                 with col2:
-                    st.metric("Accuracy", f"{player_stats['accuracy']}%")
-                with col3:
                     st.metric("Total Kills", player_stats['total_kills'])
-                with col4:
+                with col3:
                     st.metric("Total Matches", player_stats['total_matches'])
                 
                 # Performance trend
                 st.subheader("Performance Over Time")
-                st.plotly_chart(create_player_performance_trend(df, selected_player), use_container_width=True)
+                st.plotly_chart(create_player_performance_trend(df, selected_player), use_container_width=True, key="player_performance_trend")
                 
                 # Player details
                 col1, col2 = st.columns(2)
@@ -192,7 +188,7 @@ elif page == "👥 Team Analysis":
     
     if team_stats:
         # Team performance chart
-        st.plotly_chart(create_team_performance_chart(df), use_container_width=True)
+        st.plotly_chart(create_team_performance_chart(df), use_container_width=True, key="team_performance_chart")
         
         # Team details
         st.subheader("Team Details")
@@ -242,10 +238,10 @@ elif page == "📈 Match History":
         filtered_df = filter_data_by_game_mode(filtered_df, selected_mode)
     
     # Match timeline
-    st.plotly_chart(create_match_timeline(filtered_df), use_container_width=True)
+    st.plotly_chart(create_match_timeline(filtered_df), use_container_width=True, key="filtered_match_timeline")
     
     # Map performance
-    st.plotly_chart(create_map_performance_chart(filtered_df), use_container_width=True)
+    st.plotly_chart(create_map_performance_chart(filtered_df), use_container_width=True, key="filtered_map_performance_chart")
     
     # Recent matches table
     st.subheader("Recent Matches")
@@ -275,7 +271,10 @@ elif page == "🎮 Data Input":
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        match_datetime = st.datetime_input("Match Date & Time", value=datetime.now())
+        # Use date and time inputs separately since datetime_input doesn't exist
+        match_date = st.date_input("Match Date", value=datetime.now().date())
+        match_time = st.time_input("Match Time", value=datetime.now().time())
+        match_datetime = datetime.combine(match_date, match_time)
     
     with col2:
         game_mode = st.selectbox("Game Mode", ["Team", "FFA"])
@@ -286,6 +285,7 @@ elif page == "🎮 Data Input":
             map_name = st.selectbox("Map", maps)
         else:
             map_name = st.text_input("Map Name", "Desert")
+        match_length = st.selectbox("Match Length (minutes)", [5, 10, 20], index=1)
     
     # Player data input
     st.subheader("Player Data")
@@ -365,6 +365,7 @@ elif page == "🎮 Data Input":
                 player_data['datetime'] = match_datetime
                 player_data['game_mode'] = game_mode
                 player_data['map_name'] = map_name
+                player_data['match_length'] = match_length
                 match_data.append(player_data)
         
         # Validate data
@@ -393,11 +394,11 @@ elif page == "🔧 Advanced Analytics":
     if len(players) >= 2:
         selected_players = st.multiselect("Select Players to Compare", players, max_selections=5)
         if len(selected_players) >= 2:
-            st.plotly_chart(create_player_comparison_radar(df, selected_players), use_container_width=True)
+            st.plotly_chart(create_player_comparison_radar(df, selected_players), use_container_width=True, key="player_comparison_radar")
     
     # Ping impact analysis
     st.subheader("Ping Impact Analysis")
-    st.plotly_chart(create_ping_impact_chart(df), use_container_width=True)
+    st.plotly_chart(create_ping_impact_chart(df), use_container_width=True, key="ping_impact_chart")
     
     # Weapon meta analysis
     st.subheader("Weapon Meta Analysis")
@@ -410,12 +411,12 @@ elif page == "🔧 Advanced Analytics":
         
         with col1:
             st.write("**Most Popular Weapons**")
-            st.dataframe(weapon_df[['usage_count', 'kd_ratio', 'accuracy']].head(), use_container_width=True)
+            st.dataframe(weapon_df[['usage_count', 'kd_ratio']].head(), use_container_width=True)
         
         with col2:
             st.write("**Best Performing Weapons**")
             best_weapons = weapon_df.sort_values('kd_ratio', ascending=False)
-            st.dataframe(best_weapons[['usage_count', 'kd_ratio', 'accuracy']].head(), use_container_width=True)
+            st.dataframe(best_weapons[['usage_count', 'kd_ratio']].head(), use_container_width=True)
 
 # Leaderboards Page
 elif page == "📋 Leaderboards":
@@ -424,14 +425,13 @@ elif page == "📋 Leaderboards":
     # Leaderboard type selection
     leaderboard_type = st.selectbox(
         "Leaderboard Type",
-        ["K/D Ratio", "Total Kills", "Accuracy", "Avg Kills per Match", "Total Score", "Total Coins"]
+        ["K/D Ratio", "Total Kills", "Avg Kills per Match", "Total Score", "Total Coins"]
     )
     
     # Get leaderboard data
     metric_map = {
         "K/D Ratio": "kd_ratio",
         "Total Kills": "total_kills",
-        "Accuracy": "accuracy",
         "Avg Kills per Match": "avg_kills_per_match",
         "Total Score": "total_score",
         "Total Coins": "total_coins"
@@ -484,7 +484,6 @@ st.sidebar.markdown("Track your gaming performance!")
 if not df.empty:
     st.sidebar.markdown(f"**Data Summary:**")
     st.sidebar.markdown(f"• {len(df['match_id'].unique())} matches")
-    st.sidebar.markdown(f"• {len(df['player_name'].unique())} players")
     st.sidebar.markdown(f"• {df['kills'].sum()} total kills")
 else:
     st.sidebar.markdown("No data loaded yet.") 

@@ -15,7 +15,7 @@ def load_match_data():
         return pd.DataFrame(columns=[
             'match_id', 'datetime', 'game_mode', 'map_name', 'team', 
             'player_name', 'kills', 'deaths', 'assists', 'score', 
-            'weapon', 'ping', 'coins'
+            'weapon', 'ping', 'coins', 'match_length'
         ])
 
 def save_match_data(df):
@@ -51,13 +51,13 @@ def validate_match_data(match_data):
     
     for player_data in match_data:
         # Check required fields
-        required_fields = ['player_name', 'kills', 'deaths', 'score', 'weapon']
+        required_fields = ['player_name', 'kills', 'deaths', 'score', 'weapon', 'match_length']
         for field in required_fields:
-            if not player_data.get(field):
+            if not player_data.get(field) and player_data.get(field) != 0:
                 errors.append(f"Missing required field: {field}")
         
         # Check numeric fields
-        numeric_fields = ['kills', 'deaths', 'score', 'ping', 'coins']
+        numeric_fields = ['kills', 'deaths', 'score', 'ping', 'coins', 'match_length']
         for field in numeric_fields:
             if field in player_data and player_data[field] is not None:
                 try:
@@ -89,7 +89,8 @@ def add_match_to_dataframe(df, match_data):
             'score': int(player_data['score']),
             'weapon': player_data['weapon'],
             'ping': int(player_data['ping']) if player_data.get('ping') else None,
-            'coins': int(player_data['coins']) if player_data.get('coins') else None
+            'coins': int(player_data['coins']) if player_data.get('coins') else None,
+            'match_length': int(player_data['match_length']) if player_data.get('match_length') else None
         }
         new_rows.append(row)
     

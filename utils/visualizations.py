@@ -11,13 +11,11 @@ def create_overview_cards(df):
         return {
             'total_matches': 0,
             'total_kills': 0,
-            'total_players': 0,
             'avg_kd_ratio': 0
         }
     
     total_matches = len(df['match_id'].unique())
     total_kills = int(df['kills'].sum())
-    total_players = len(df['player_name'].unique())
     
     # Calculate average K/D ratio
     total_deaths = df['deaths'].sum()
@@ -26,7 +24,6 @@ def create_overview_cards(df):
     return {
         'total_matches': total_matches,
         'total_kills': total_kills,
-        'total_players': total_players,
         'avg_kd_ratio': avg_kd_ratio
     }
 
@@ -286,7 +283,7 @@ def create_player_comparison_radar(df, players):
     if df.empty or len(players) < 2:
         return go.Figure()
     
-    categories = ['K/D Ratio', 'Accuracy', 'Avg Kills/Match', 'Total Score', 'Total Matches']
+    categories = ['K/D Ratio', 'Avg Kills/Match', 'Total Score', 'Total Matches']
     
     fig = go.Figure()
     
@@ -295,7 +292,6 @@ def create_player_comparison_radar(df, players):
         if player_stats:
             values = [
                 player_stats['kd_ratio'],
-                player_stats['accuracy'],
                 player_stats['avg_kills_per_match'],
                 player_stats['total_score'] / 1000,  # Scale down for radar
                 player_stats['total_matches']

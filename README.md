@@ -20,7 +20,6 @@ A comprehensive gaming statistics dashboard built with Streamlit to track and an
 - **Individual Performance**: Detailed stats for each player
 - **Performance Trends**: Track player improvement over time
 - **Player Details**: Favorite weapons, best matches, and averages
-- **Accuracy Metrics**: Calculate and display player accuracy percentages
 
 ### 👥 Team Analysis
 - **Team Performance**: Win/loss ratios and team statistics
@@ -28,7 +27,7 @@ A comprehensive gaming statistics dashboard built with Streamlit to track and an
 - **Team Comparisons**: Head-to-head team performance analysis
 
 ### 📋 Leaderboards
-- **Multiple Metrics**: K/D ratio, total kills, accuracy, average kills, total score, coins
+- **Multiple Metrics**: K/D ratio, total kills, average kills, total score, coins
 - **Interactive Rankings**: Sortable leaderboards with visual charts
 - **Player Rankings**: See who's performing best in different categories
 
@@ -83,7 +82,7 @@ deadshot-stats/
 The application uses a CSV file to store match data with the following structure:
 
 ```csv
-match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score,weapon,ping,coins
+match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score,weapon,ping,coins,match_length
 ```
 
 ### Fields Explained:
@@ -100,6 +99,7 @@ match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score
 - **weapon**: Primary weapon used
 - **ping**: Network ping in milliseconds
 - **coins**: Coins earned in the match
+- **match_length**: Length of the match in minutes (e.g., 5, 10, 20)
 
 ## 🎯 How to Use
 
@@ -127,7 +127,6 @@ match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score
 
 ### Individual Performance
 - **K/D Ratio**: Kills divided by deaths
-- **Accuracy**: Percentage of kills vs total engagements
 - **Average Kills per Match**: Consistency metric
 - **Best Performance**: Highest kills and score in a single match
 - **Weapon Preferences**: Most used weapons and performance with each

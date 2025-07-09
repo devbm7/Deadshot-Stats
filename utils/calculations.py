@@ -7,13 +7,6 @@ def calculate_kd_ratio(kills, deaths):
         return kills if kills > 0 else 0
     return round(kills / deaths, 2)
 
-def calculate_accuracy(kills, deaths):
-    """Calculate accuracy (kills / (kills + deaths))"""
-    total = kills + deaths
-    if total == 0:
-        return 0
-    return round((kills / total) * 100, 1)
-
 def get_player_stats(df, player_name=None):
     """Get comprehensive player statistics"""
     if df.empty:
@@ -38,7 +31,6 @@ def get_player_stats(df, player_name=None):
         'avg_deaths_per_match': round(player_df.groupby('match_id')['deaths'].sum().mean(), 1),
         'avg_score_per_match': round(player_df.groupby('match_id')['score'].sum().mean(), 1),
         'kd_ratio': calculate_kd_ratio(player_df['kills'].sum(), player_df['deaths'].sum()),
-        'accuracy': calculate_accuracy(player_df['kills'].sum(), player_df['deaths'].sum()),
         'best_match_kills': int(player_df.groupby('match_id')['kills'].sum().max()),
         'best_match_score': int(player_df.groupby('match_id')['score'].sum().max()),
         'favorite_weapon': player_df['weapon'].mode().iloc[0] if not player_df['weapon'].mode().empty else 'Unknown',
@@ -105,7 +97,6 @@ def get_leaderboard_data(df, metric='kd_ratio'):
             leaderboard_data.append({
                 'player_name': player,
                 'kd_ratio': player_stats['kd_ratio'],
-                'accuracy': player_stats['accuracy'],
                 'total_kills': player_stats['total_kills'],
                 'avg_kills_per_match': player_stats['avg_kills_per_match'],
                 'total_score': player_stats['total_score'],
@@ -135,7 +126,6 @@ def get_weapon_stats(df):
             'total_deaths': int(weapon_data['deaths'].sum()),
             'avg_kills_per_use': round(weapon_data['kills'].mean(), 1),
             'kd_ratio': calculate_kd_ratio(weapon_data['kills'].sum(), weapon_data['deaths'].sum()),
-            'accuracy': calculate_accuracy(weapon_data['kills'].sum(), weapon_data['deaths'].sum()),
             'avg_score': round(weapon_data['score'].mean(), 1)
         }
     
@@ -173,7 +163,6 @@ def get_recent_activity(df, days=7):
         'recent_matches': len(recent_data['match_id'].unique()),
         'recent_players': len(recent_data['player_name'].unique()),
         'recent_kills': int(recent_data['kills'].sum()),
-        'most_active_player': recent_data['player_name'].mode().iloc[0] if not recent_data['player_name'].mode().empty else 'None',
         'recent_weapons': recent_data['weapon'].value_counts().head(3).to_dict()
     }
 
