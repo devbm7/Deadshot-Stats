@@ -154,6 +154,8 @@ elif page == "📊 Player Analysis":
                 with col2:
                     st.metric("Total Kills", player_stats['total_kills'])
                 with col3:
+                    st.metric("Total Assists", player_stats['total_assists'])
+                with col4:
                     st.metric("Total Matches", player_stats['total_matches'])
                 
                 # Performance trend
@@ -168,6 +170,7 @@ elif page == "📊 Player Analysis":
                     st.write(f"**Favorite Weapon:** {player_stats['favorite_weapon']}")
                     st.write(f"**Best Match Kills:** {player_stats['best_match_kills']}")
                     st.write(f"**Best Match Score:** {player_stats['best_match_score']}")
+                    st.write(f"**Best Match Assists:** {player_stats['best_match_assists']}")
                     if player_stats['avg_ping']:
                         st.write(f"**Average Ping:** {player_stats['avg_ping']}ms")
                 
@@ -175,6 +178,7 @@ elif page == "📊 Player Analysis":
                     st.subheader("Averages")
                     st.write(f"**Kills per Match:** {player_stats['avg_kills_per_match']}")
                     st.write(f"**Deaths per Match:** {player_stats['avg_deaths_per_match']}")
+                    st.write(f"**Assists per Match:** {player_stats['avg_assists_per_match']}")
                     st.write(f"**Score per Match:** {player_stats['avg_score_per_match']}")
                     st.write(f"**Total Coins:** {player_stats['total_coins']}")
     else:
@@ -210,6 +214,12 @@ elif page == "👥 Team Analysis":
 elif page == "📈 Match History":
     st.title("📈 Match History")
     
+    # Debug: Show available players (can be removed later)
+    if st.checkbox("Show Debug Info"):
+        st.write("Available players:", get_unique_players(df))
+        st.write("Available game modes:", get_unique_game_modes(df))
+        st.write("Available maps:", get_unique_maps(df))
+    
     # Filters
     col1, col2, col3 = st.columns(3)
     
@@ -222,7 +232,7 @@ elif page == "📈 Match History":
     
     with col2:
         players = get_unique_players(df)
-        selected_players = st.multiselect("Filter by Players", players)
+        selected_players = st.multiselect("Filter by Players", players, help="Select players to filter matches")
     
     with col3:
         game_modes = get_unique_game_modes(df)
@@ -425,7 +435,7 @@ elif page == "📋 Leaderboards":
     # Leaderboard type selection
     leaderboard_type = st.selectbox(
         "Leaderboard Type",
-        ["K/D Ratio", "Total Kills", "Avg Kills per Match", "Total Score", "Total Coins"]
+        ["K/D Ratio", "Total Kills", "Avg Kills per Match", "Total Score", "Total Coins", "Total Assists"]
     )
     
     # Get leaderboard data
@@ -434,7 +444,8 @@ elif page == "📋 Leaderboards":
         "Total Kills": "total_kills",
         "Avg Kills per Match": "avg_kills_per_match",
         "Total Score": "total_score",
-        "Total Coins": "total_coins"
+        "Total Coins": "total_coins",
+        "Total Assists": "total_assists"
     }
     
     leaderboard_df = get_leaderboard_data(df, metric_map[leaderboard_type])

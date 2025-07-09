@@ -83,6 +83,7 @@ def create_player_performance_trend(df, player_name):
     match_stats = player_data.groupby('match_id').agg({
         'kills': 'sum',
         'deaths': 'sum',
+        'assists': 'sum',
         'score': 'sum',
         'datetime': 'first'
     }).reset_index()
@@ -110,6 +111,16 @@ def create_player_performance_trend(df, player_name):
         line=dict(color='#d62728')
     ))
     
+    # Add assists trace if assists data exists
+    if 'assists' in match_stats.columns and not match_stats['assists'].isna().all():
+        fig.add_trace(go.Scatter(
+            x=match_stats['datetime'],
+            y=match_stats['assists'],
+            mode='lines+markers',
+            name='Assists',
+            line=dict(color='#9467bd')
+        ))
+    
     fig.add_trace(go.Scatter(
         x=match_stats['datetime'],
         y=match_stats['kd_ratio'],
@@ -122,7 +133,7 @@ def create_player_performance_trend(df, player_name):
     fig.update_layout(
         title=f'{player_name} Performance Over Time',
         xaxis_title='Date',
-        yaxis_title='Kills/Deaths',
+        yaxis_title='Kills/Deaths/Assists',
         yaxis2=dict(
             title='K/D Ratio',
             overlaying='y',
@@ -283,7 +294,7 @@ def create_player_comparison_radar(df, players):
     if df.empty or len(players) < 2:
         return go.Figure()
     
-    categories = ['K/D Ratio', 'Avg Kills/Match', 'Total Score', 'Total Matches']
+    categories = ['K/D Ratio', 'Avg Kills/Match', 'Avg Assists/Match', 'Total Score', 'Total Matches']
     
     fig = go.Figure()
     
@@ -293,6 +304,7 @@ def create_player_comparison_radar(df, players):
             values = [
                 player_stats['kd_ratio'],
                 player_stats['avg_kills_per_match'],
+                player_stats['avg_assists_per_match'],
                 player_stats['total_score'] / 1000,  # Scale down for radar
                 player_stats['total_matches']
             ]

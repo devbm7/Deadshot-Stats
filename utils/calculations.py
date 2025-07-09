@@ -24,15 +24,17 @@ def get_player_stats(df, player_name=None):
         'total_matches': len(player_df['match_id'].unique()),
         'total_kills': int(player_df['kills'].sum()),
         'total_deaths': int(player_df['deaths'].sum()),
-        'total_assists': int(player_df['assists'].sum()) if 'assists' in player_df.columns else 0,
+        'total_assists': int(player_df['assists'].sum()) if 'assists' in player_df.columns and not player_df['assists'].isna().all() else 0,
         'total_score': int(player_df['score'].sum()),
         'total_coins': int(player_df['coins'].sum()) if 'coins' in player_df.columns else 0,
         'avg_kills_per_match': round(player_df.groupby('match_id')['kills'].sum().mean(), 1),
         'avg_deaths_per_match': round(player_df.groupby('match_id')['deaths'].sum().mean(), 1),
+        'avg_assists_per_match': round(player_df.groupby('match_id')['assists'].sum().mean(), 1) if 'assists' in player_df.columns and not player_df['assists'].isna().all() else 0,
         'avg_score_per_match': round(player_df.groupby('match_id')['score'].sum().mean(), 1),
         'kd_ratio': calculate_kd_ratio(player_df['kills'].sum(), player_df['deaths'].sum()),
         'best_match_kills': int(player_df.groupby('match_id')['kills'].sum().max()),
         'best_match_score': int(player_df.groupby('match_id')['score'].sum().max()),
+        'best_match_assists': int(player_df.groupby('match_id')['assists'].sum().max()) if 'assists' in player_df.columns and not player_df['assists'].isna().all() else 0,
         'favorite_weapon': player_df['weapon'].mode().iloc[0] if not player_df['weapon'].mode().empty else 'Unknown',
         'avg_ping': round(player_df['ping'].mean(), 1) if 'ping' in player_df.columns and not player_df['ping'].isna().all() else None
     }
@@ -98,7 +100,9 @@ def get_leaderboard_data(df, metric='kd_ratio'):
                 'player_name': player,
                 'kd_ratio': player_stats['kd_ratio'],
                 'total_kills': player_stats['total_kills'],
+                'total_assists': player_stats['total_assists'],
                 'avg_kills_per_match': player_stats['avg_kills_per_match'],
+                'avg_assists_per_match': player_stats['avg_assists_per_match'],
                 'total_score': player_stats['total_score'],
                 'total_coins': player_stats['total_coins'],
                 'total_matches': player_stats['total_matches']
