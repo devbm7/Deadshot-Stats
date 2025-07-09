@@ -55,6 +55,8 @@ def extract_data_from_image(image: Image.Image, api_key: str) -> Dict[str, Any]:
         Important notes:
         - Extract player names EXACTLY as they appear in the image, including case sensitivity
         - Common player names in this system include: DevilOHeaven, MaXiMus22, Heet63, Alice, Bob, Charlie, David
+        - Valid weapon names: AR, SMG, Sniper, Shotgun
+        - Valid map names: Refinery, Factory, Forest, Neo Tokyo, Vineyard, Snowfall
         - Only extract information that is clearly visible in the image
         - For missing data, use null values
         - If you can't determine game mode, default to "FFA"
@@ -180,7 +182,7 @@ def format_extracted_data_for_display(data: Dict[str, Any]) -> Dict[str, Any]:
             "deaths": player.get("deaths", 0),
             "assists": player.get("assists"),
             "score": player.get("score", 0),
-            "weapon": player.get("weapon", "AK47"),
+            "weapon": player.get("weapon", "AR"),
             "ping": player.get("ping"),
             "coins": player.get("coins", 0),
             "team": None  # Will be set based on game mode

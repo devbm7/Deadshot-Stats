@@ -253,14 +253,14 @@ match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score
 - **match_id**: Unique identifier for each match
 - **datetime**: Date and time of the match
 - **game_mode**: "Team" or "FFA" (Free-for-All)
-- **map_name**: Name of the map played
+- **map_name**: Name of the map played (Refinery, Factory, Forest, Neo Tokyo, Vineyard, Snowfall)
 - **team**: Team assignment (Team1, Team2, or null for FFA)
 - **player_name**: Name of the player
 - **kills**: Number of kills
 - **deaths**: Number of deaths
 - **assists**: Number of assists (required for team matches)
 - **score**: Total score for the match
-- **weapon**: Primary weapon used
+- **weapon**: Primary weapon used (AR, SMG, Sniper, Shotgun)
 - **ping**: Network ping in milliseconds
 - **coins**: Coins earned in the match
 - **match_length**: Length of the match in minutes (e.g., 5, 10, 20)
@@ -282,10 +282,29 @@ The system supports both existing players and custom player names:
 - Heet63
 - Alice, Bob, Charlie, David (sample players)
 
+**Available Maps**:
+- Refinery (formerly City)
+- Factory (formerly Desert)
+- Forest
+- Neo Tokyo
+- Vineyard
+- Snowfall
+
+**Available Weapons**:
+- AR (formerly AK47)
+- SMG (formerly M4A1)
+- Sniper (formerly AWP)
+- Shotgun
+
 **To Add New Players**:
 1. Run the utility script: `python add_players.py`
 2. Edit the `new_players` list in the script
 3. Or simply type new player names when adding match data
+
+**To Add All Maps and Weapons**:
+1. Run the utility script: `python update_maps_weapons.py`
+2. This will add sample matches for all maps and weapons
+3. All maps and weapons will then appear in dropdown menus
 
 #### 📷 Image Upload (AI-Powered)
 1. Navigate to the **"🎮 Data Input"** page

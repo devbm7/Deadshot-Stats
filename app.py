@@ -554,7 +554,7 @@ elif page == "🎮 Data Input":
                         default_map = extracted_data.get("map_name") if extracted_data.get("map_name") in maps else maps[0]
                         map_name = st.selectbox("Map", maps, index=maps.index(default_map) if default_map in maps else 0, key="extracted_map")
                     else:
-                        map_name = st.text_input("Map Name", value=extracted_data.get("map_name", "Desert"), key="extracted_map")
+                        map_name = st.text_input("Map Name", value=extracted_data.get("map_name", "Refinery"), key="extracted_map")
                     
                     match_length = st.selectbox("Match Length (minutes)", [5, 10, 20], 
                                               index=[5, 10, 20].index(extracted_data.get("match_length", 10)) if extracted_data.get("match_length") in [5, 10, 20] else 1,
@@ -577,7 +577,7 @@ elif page == "🎮 Data Input":
                         'deaths': player.get('deaths', 0),
                         'assists': player.get('assists'),
                         'score': player.get('score', 0),
-                        'weapon': player.get('weapon', 'AK47'),
+                        'weapon': player.get('weapon', 'AR'),
                         'ping': player.get('ping'),
                         'coins': player.get('coins', 0),
                         'team': player.get('team')
@@ -679,7 +679,7 @@ elif page == "🎮 Data Input":
                         'deaths': 0,
                         'assists': 0,
                         'score': 0,
-                        'weapon': 'AK47',
+                        'weapon': 'AR',
                         'ping': None,
                         'coins': 0,
                         'team': None
@@ -751,7 +751,7 @@ elif page == "🎮 Data Input":
             if maps:
                 map_name = st.selectbox("Map", maps, key="manual_map")
             else:
-                map_name = st.text_input("Map Name", "Desert", key="manual_map")
+                map_name = st.text_input("Map Name", "Refinery", key="manual_map")
             match_length = st.selectbox("Match Length (minutes)", [5, 10, 20], index=1, key="manual_match_length")
         
         # Player data input
@@ -769,7 +769,7 @@ elif page == "🎮 Data Input":
                 'deaths': 0,
                 'assists': 0,
                 'score': 0,
-                'weapon': 'AK47',
+                'weapon': 'AR',
                 'ping': None,
                 'coins': 0,
                 'team': None
