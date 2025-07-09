@@ -19,7 +19,8 @@ from utils.calculations import (
     get_map_stats, get_recent_activity, get_match_summary, get_player_evolution_timeline,
     get_performance_clusters, get_player_streaks, get_team_chemistry_matrix,
     get_player_role_analysis, get_team_formation_performance, get_battle_royale_rankings,
-    get_achievement_badges, get_gaming_session_analysis
+    get_achievement_badges, get_gaming_session_analysis, get_player_comparison_data,
+    simulate_team_scenario, get_optimal_team_composition
 )
 from utils.visualizations import (
     create_overview_cards, create_kd_leaderboard_chart, create_player_performance_trend,
@@ -29,7 +30,8 @@ from utils.visualizations import (
     create_player_evolution_chart, create_performance_clusters_chart, create_streak_analysis_chart,
     create_team_chemistry_heatmap, create_role_analysis_chart, create_team_formation_chart,
     create_battle_royale_rankings_chart, create_achievement_badges_chart, create_gaming_session_analysis_chart,
-    create_achievement_details
+    create_achievement_details, create_player_comparison_chart, create_scenario_simulation_chart,
+    create_optimal_team_chart
 )
 
 # Page configuration
@@ -79,7 +81,7 @@ st.sidebar.title("🎯 Deadshot Stats")
 page = st.sidebar.selectbox(
     "Navigation",
     ["🏠 Dashboard", "📊 Player Analysis", "👥 Team Analysis", "📈 Match History", 
-     "🎮 Data Input", "🔧 Advanced Analytics", "📋 Leaderboards", "🎉 Fun Features"]
+     "🎮 Data Input", "🔧 Advanced Analytics", "📋 Leaderboards", "🎉 Fun Features", "🎛️ Interactive Dashboards"]
 )
 
 # Load data
@@ -782,6 +784,163 @@ elif page == "🎉 Fun Features":
                     with col3:
                         st.write(f"**Peak Day:** {session_info['peak_performance_day']}")
                         st.write(f"**Peak K/D:** {session_info['peak_kd_ratio']:.2f}")
+
+# Interactive Dashboards Page
+elif page == "🎛️ Interactive Dashboards":
+    st.title("🎛️ Interactive Dashboards")
+    
+    # Player Comparison Tool
+    st.header("⚔️ Player Comparison Tool")
+    st.write("Compare two players side-by-side with interactive sliders and detailed metrics.")
+    
+    players = get_unique_players(df)
+    if len(players) >= 2:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            player1 = st.selectbox("Select Player 1", players, key="comparison_player1")
+        
+        with col2:
+            player2 = st.selectbox("Select Player 2", players, key="comparison_player2")
+        
+        if player1 and player2 and player1 != player2:
+            # Create comparison chart
+            comparison_fig = create_player_comparison_chart(df, player1, player2)
+            st.plotly_chart(comparison_fig, use_container_width=True, key="player_comparison_chart")
+            
+            # Show detailed comparison
+            comparison_data = get_player_comparison_data(df, player1, player2)
+            if comparison_data:
+                st.write("**Detailed Comparison:**")
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.write("**K/D Ratio:**")
+                    winner = comparison_data['winners']['kd_ratio']
+                    diff = comparison_data['comparison']['kd_ratio_diff']
+                    st.write(f"{winner} wins by {abs(diff):.2f}")
+                
+                with col2:
+                    st.write("**Win Rate:**")
+                    winner = comparison_data['winners']['win_rate']
+                    diff = comparison_data['comparison']['win_rate_diff']
+                    st.write(f"{winner} wins by {abs(diff):.1f}%")
+                
+                with col3:
+                    st.write("**Kills per Minute:**")
+                    winner = comparison_data['winners']['kills_per_min']
+                    diff = comparison_data['comparison']['kills_per_min_diff']
+                    st.write(f"{winner} wins by {abs(diff):.2f}")
+                
+                # Interactive sliders for custom scenarios
+                st.subheader("🎛️ Custom Scenario Sliders")
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.write("**Player 1 Adjustments:**")
+                    p1_kd_boost = st.slider(f"{player1} K/D Boost", -1.0, 2.0, 0.0, 0.1, key="p1_kd_boost")
+                    p1_win_boost = st.slider(f"{player1} Win Rate Boost", -20, 30, 0, 1, key="p1_win_boost")
+                
+                with col2:
+                    st.write("**Player 2 Adjustments:**")
+                    p2_kd_boost = st.slider(f"{player2} K/D Boost", -1.0, 2.0, 0.0, 0.1, key="p2_kd_boost")
+                    p2_win_boost = st.slider(f"{player2} Win Rate Boost", -20, 30, 0, 1, key="p2_win_boost")
+                
+                # Show adjusted comparison
+                if p1_kd_boost != 0 or p1_win_boost != 0 or p2_kd_boost != 0 or p2_win_boost != 0:
+                    st.write("**Adjusted Comparison:**")
+                    adjusted_p1_kd = comparison_data['player1']['stats']['kd_ratio'] + p1_kd_boost
+                    adjusted_p1_win = comparison_data['player1']['stats']['win_rate'] + p1_win_boost
+                    adjusted_p2_kd = comparison_data['player2']['stats']['kd_ratio'] + p2_kd_boost
+                    adjusted_p2_win = comparison_data['player2']['stats']['win_rate'] + p2_win_boost
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric(f"{player1} Adjusted K/D", f"{adjusted_p1_kd:.2f}", f"{p1_kd_boost:+.2f}")
+                        st.metric(f"{player1} Adjusted Win Rate", f"{adjusted_p1_win:.1f}%", f"{p1_win_boost:+.1f}%")
+                    
+                    with col2:
+                        st.metric(f"{player2} Adjusted K/D", f"{adjusted_p2_kd:.2f}", f"{p2_kd_boost:+.2f}")
+                        st.metric(f"{player2} Adjusted Win Rate", f"{adjusted_p2_win:.1f}%", f"{p2_win_boost:+.1f}%")
+    
+    # Scenario Simulator
+    st.header("🎯 Scenario Simulator")
+    st.write("Simulate different team compositions and predict outcomes.")
+    
+    if len(players) >= 3:
+        # Team composition selection
+        st.subheader("Team Composition")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**Your Team:**")
+            team_size = st.slider("Team Size", 2, 5, 3, key="team_size")
+            team_players = st.multiselect("Select Team Players", players, max_selections=team_size, key="team_players")
+        
+        with col2:
+            st.write("**Opponent Team (Optional):**")
+            opponent_players = st.multiselect("Select Opponent Players", players, max_selections=team_size, key="opponent_players")
+        
+        if team_players:
+            # Simulate team scenario
+            scenario_fig = create_scenario_simulation_chart(df, team_players, opponent_players if opponent_players else None)
+            st.plotly_chart(scenario_fig, use_container_width=True, key="scenario_simulation_chart")
+            
+            # Show simulation results
+            team_performance = simulate_team_scenario(df, team_players, opponent_players if opponent_players else None)
+            if team_performance:
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric("Predicted Win Rate", f"{team_performance['predicted_win_rate']:.1f}%")
+                    st.metric("Avg K/D Ratio", f"{team_performance['avg_kd_ratio']:.2f}")
+                
+                with col2:
+                    st.metric("Synergy Score", f"{team_performance['synergy_score']:.1f}")
+                    st.metric("Total Kills/Min", f"{team_performance['total_kills_per_min']:.2f}")
+                
+                with col3:
+                    if opponent_players and 'head_to_head_win_rate' in team_performance:
+                        st.metric("Head-to-Head Win Rate", f"{team_performance['head_to_head_win_rate']:.1f}%")
+                    st.metric("Team Size", team_performance['team_size'])
+        
+        # Optimal team finder
+        st.subheader("🎯 Optimal Team Finder")
+        st.write("Find the best team composition from available players.")
+        
+        available_players = st.multiselect("Select Available Players", players, default=players[:min(6, len(players))], key="available_players")
+        optimal_team_size = st.slider("Optimal Team Size", 2, 5, 3, key="optimal_team_size")
+        
+        if len(available_players) >= optimal_team_size:
+            if st.button("Find Optimal Team"):
+                optimal_data = get_optimal_team_composition(df, available_players, optimal_team_size)
+                
+                if optimal_data and optimal_data['best_team']:
+                    st.success(f"🏆 Best Team: {' + '.join(optimal_data['best_team'])}")
+                    st.metric("Team Score", f"{optimal_data['best_score']:.1f}")
+                    
+                    # Show optimal team chart
+                    optimal_fig = create_optimal_team_chart(df, available_players, optimal_team_size)
+                    st.plotly_chart(optimal_fig, use_container_width=True, key="optimal_team_chart")
+                    
+                    # Show top teams
+                    st.write("**Top Team Combinations:**")
+                    sorted_teams = sorted(optimal_data['all_teams'].items(), key=lambda x: x[1]['score'], reverse=True)[:5]
+                    
+                    for i, (team, data) in enumerate(sorted_teams):
+                        with st.expander(f"#{i+1}: {' + '.join(team)}"):
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                st.metric("Score", f"{data['score']:.1f}")
+                                st.metric("Win Rate", f"{data['performance']['predicted_win_rate']:.1f}%")
+                            with col2:
+                                st.metric("Synergy", f"{data['performance']['synergy_score']:.1f}")
+                                st.metric("Avg K/D", f"{data['performance']['avg_kd_ratio']:.2f}")
+                            with col3:
+                                st.metric("Kills/Min", f"{data['performance']['total_kills_per_min']:.2f}")
+                                st.metric("Assists/Min", f"{data['performance']['total_assists_per_min']:.2f}")
+    else:
+        st.info("Need at least 3 players for scenario simulation.")
 
 # Footer
 st.sidebar.markdown("---")

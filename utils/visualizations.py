@@ -3,7 +3,7 @@ import plotly.graph_objects as go
 import plotly.subplots as sp
 import pandas as pd
 import numpy as np
-from utils.calculations import get_player_stats, get_weapon_stats, get_map_stats, get_performance_clusters, get_player_streaks, get_player_evolution_timeline,  get_team_chemistry_matrix, get_player_role_analysis, get_team_formation_performance, get_battle_royale_rankings, get_achievement_badges, get_gaming_session_analysis
+from utils.calculations import get_player_stats, get_weapon_stats, get_map_stats, get_performance_clusters, get_player_streaks, get_player_evolution_timeline,  get_team_chemistry_matrix, get_player_role_analysis, get_team_formation_performance, get_battle_royale_rankings, get_achievement_badges, get_gaming_session_analysis, get_player_comparison_data, simulate_team_scenario, get_optimal_team_composition
 
 def create_overview_cards(df):
     """Create overview statistics cards"""
@@ -1110,6 +1110,179 @@ def create_achievement_details(df, player_name):
         height=400,
         showlegend=False,
         yaxis=dict(range=[0, 100])
+    )
+    
+    return fig 
+
+def create_player_comparison_chart(df, player1, player2):
+    """Create side-by-side comparison chart for two players"""
+    if df.empty or not player1 or not player2:
+        return go.Figure()
+    
+    comparison_data = get_player_comparison_data(df, player1, player2)
+    if not comparison_data:
+        return go.Figure()
+    
+    # Prepare data for comparison
+    metrics = ['K/D Ratio', 'Win Rate (%)', 'Kills/Min', 'Assists/Min', 'Total Matches', 'Total Kills']
+    player1_values = [
+        comparison_data['player1']['stats']['kd_ratio'],
+        comparison_data['player1']['stats']['win_rate'],
+        comparison_data['player1']['stats']['kills_per_minute'],
+        comparison_data['player1']['stats']['assists_per_minute'],
+        comparison_data['player1']['stats']['total_matches'],
+        comparison_data['player1']['stats']['total_kills']
+    ]
+    player2_values = [
+        comparison_data['player2']['stats']['kd_ratio'],
+        comparison_data['player2']['stats']['win_rate'],
+        comparison_data['player2']['stats']['kills_per_minute'],
+        comparison_data['player2']['stats']['assists_per_minute'],
+        comparison_data['player2']['stats']['total_matches'],
+        comparison_data['player2']['stats']['total_kills']
+    ]
+    
+    fig = go.Figure()
+    
+    # Add bars for player 1
+    fig.add_trace(go.Bar(
+        name=player1,
+        x=metrics,
+        y=player1_values,
+        marker_color='#1f77b4',
+        text=[f"{v:.2f}" if isinstance(v, float) else str(v) for v in player1_values],
+        textposition='auto'
+    ))
+    
+    # Add bars for player 2
+    fig.add_trace(go.Bar(
+        name=player2,
+        x=metrics,
+        y=player2_values,
+        marker_color='#ff7f0e',
+        text=[f"{v:.2f}" if isinstance(v, float) else str(v) for v in player2_values],
+        textposition='auto'
+    ))
+    
+    fig.update_layout(
+        title=f'Player Comparison: {player1} vs {player2}',
+        xaxis_title='Metrics',
+        yaxis_title='Values',
+        barmode='group',
+        height=500,
+        showlegend=True
+    )
+    
+    return fig
+
+def create_scenario_simulation_chart(df, team_composition, opponent_composition=None):
+    """Create scenario simulation visualization"""
+    if df.empty or not team_composition:
+        return go.Figure()
+    
+    team_performance = simulate_team_scenario(df, team_composition, opponent_composition)
+    if not team_performance:
+        return go.Figure()
+    
+    # Create radar chart for team performance
+    categories = ['Avg K/D Ratio', 'Win Rate', 'Kills/Min', 'Assists/Min', 'Synergy Score']
+    values = [
+        team_performance['avg_kd_ratio'],
+        team_performance['predicted_win_rate'],
+        team_performance['total_kills_per_min'],
+        team_performance['total_assists_per_min'],
+        team_performance['synergy_score']
+    ]
+    
+    # Normalize values for radar chart (0-1 scale)
+    max_values = [3.0, 100, 2.0, 1.0, 100]  # Expected maximums
+    normalized_values = [min(v / max_val, 1.0) for v, max_val in zip(values, max_values)]
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatterpolar(
+        r=normalized_values,
+        theta=categories,
+        fill='toself',
+        name='Team Performance',
+        line_color='#1f77b4'
+    ))
+    
+    # If opponent is provided, add comparison
+    if opponent_composition and 'head_to_head_win_rate' in team_performance:
+        opponent_performance = simulate_team_scenario(df, opponent_composition)
+        if opponent_performance:
+            opponent_values = [
+                opponent_performance['avg_kd_ratio'],
+                opponent_performance['predicted_win_rate'],
+                opponent_performance['total_kills_per_min'],
+                opponent_performance['total_assists_per_min'],
+                opponent_performance['synergy_score']
+            ]
+            opponent_normalized = [min(v / max_val, 1.0) for v, max_val in zip(opponent_values, max_values)]
+            
+            fig.add_trace(go.Scatterpolar(
+                r=opponent_normalized,
+                theta=categories,
+                fill='toself',
+                name='Opponent Performance',
+                line_color='#ff7f0e'
+            ))
+    
+    fig.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 1]
+            )),
+        showlegend=True,
+        title='Team Scenario Simulation',
+        height=500
+    )
+    
+    return fig
+
+def create_optimal_team_chart(df, available_players, team_size=3):
+    """Create visualization for optimal team composition"""
+    if df.empty or len(available_players) < team_size:
+        return go.Figure()
+    
+    optimal_data = get_optimal_team_composition(df, available_players, team_size)
+    if not optimal_data:
+        return go.Figure()
+    
+    # Get top 10 teams by score
+    sorted_teams = sorted(optimal_data['all_teams'].items(), key=lambda x: x[1]['score'], reverse=True)[:10]
+    
+    team_names = [f"Team {i+1}" for i in range(len(sorted_teams))]
+    team_scores = [team[1]['score'] for team in sorted_teams]
+    win_rates = [team[1]['performance']['predicted_win_rate'] for team in sorted_teams]
+    synergy_scores = [team[1]['performance']['synergy_score'] for team in sorted_teams]
+    
+    fig = go.Figure()
+    
+    # Create bubble chart
+    fig.add_trace(go.Scatter(
+        x=win_rates,
+        y=synergy_scores,
+        mode='markers',
+        marker=dict(
+            size=[score * 2 for score in team_scores],  # Size based on overall score
+            color=team_scores,
+            colorscale='RdYlGn',
+            showscale=True,
+            colorbar=dict(title="Team Score")
+        ),
+        text=team_names,
+        hovertemplate='<b>%{text}</b><br>Win Rate: %{x:.1f}%<br>Synergy: %{y:.1f}<br>Score: %{marker.color:.1f}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title='Optimal Team Compositions',
+        xaxis_title='Predicted Win Rate (%)',
+        yaxis_title='Synergy Score',
+        height=500,
+        showlegend=False
     )
     
     return fig 

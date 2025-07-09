@@ -828,3 +828,163 @@ def get_gaming_session_analysis(df):
         'total_sessions': len(session_analysis),
         'avg_session_duration': sum(s['duration_days'] for s in session_analysis.values()) / len(session_analysis) if session_analysis else 0
     } 
+
+def get_player_comparison_data(df, player1, player2):
+    """Get detailed comparison data between two players"""
+    if df.empty or not player1 or not player2:
+        return {}
+    
+    player1_stats = get_player_stats(df, player1)
+    player2_stats = get_player_stats(df, player2)
+    
+    if not player1_stats or not player2_stats:
+        return {}
+    
+    # Calculate comparison metrics
+    comparison_data = {
+        'player1': {
+            'name': player1,
+            'stats': player1_stats
+        },
+        'player2': {
+            'name': player2,
+            'stats': player2_stats
+        },
+        'comparison': {
+            'kd_ratio_diff': player1_stats['kd_ratio'] - player2_stats['kd_ratio'],
+            'win_rate_diff': player1_stats['win_rate'] - player2_stats['win_rate'],
+            'kills_per_min_diff': player1_stats['kills_per_minute'] - player2_stats['kills_per_minute'],
+            'assists_per_min_diff': player1_stats['assists_per_minute'] - player2_stats['assists_per_minute'],
+            'total_matches_diff': player1_stats['total_matches'] - player2_stats['total_matches'],
+            'total_kills_diff': player1_stats['total_kills'] - player2_stats['total_kills']
+        }
+    }
+    
+    # Determine winner in each category
+    comparison_data['winners'] = {
+        'kd_ratio': player1 if player1_stats['kd_ratio'] > player2_stats['kd_ratio'] else player2,
+        'win_rate': player1 if player1_stats['win_rate'] > player2_stats['win_rate'] else player2,
+        'kills_per_min': player1 if player1_stats['kills_per_minute'] > player2_stats['kills_per_minute'] else player2,
+        'assists_per_min': player1 if player1_stats['assists_per_minute'] > player2_stats['assists_per_minute'] else player2,
+        'total_matches': player1 if player1_stats['total_matches'] > player2_stats['total_matches'] else player2,
+        'total_kills': player1 if player1_stats['total_kills'] > player2_stats['total_kills'] else player2
+    }
+    
+    return comparison_data
+
+def simulate_team_scenario(df, team_composition, opponent_composition=None):
+    """Simulate team performance with different compositions"""
+    if df.empty:
+        return {}
+    
+    # Get player stats for the team
+    team_stats = {}
+    for player in team_composition:
+        player_stats = get_player_stats(df, player)
+        if player_stats:
+            team_stats[player] = player_stats
+    
+    if not team_stats:
+        return {}
+    
+    # Calculate team performance metrics
+    team_performance = {
+        'total_kd_ratio': sum(stats['kd_ratio'] for stats in team_stats.values()),
+        'avg_kd_ratio': sum(stats['kd_ratio'] for stats in team_stats.values()) / len(team_stats),
+        'total_win_rate': sum(stats['win_rate'] for stats in team_stats.values()) / len(team_stats),
+        'total_kills_per_min': sum(stats['kills_per_minute'] for stats in team_stats.values()),
+        'total_assists_per_min': sum(stats['assists_per_minute'] for stats in team_stats.values()),
+        'total_matches': max(stats['total_matches'] for stats in team_stats.values()),
+        'team_size': len(team_stats)
+    }
+    
+    # Calculate team synergy score (based on complementary roles)
+    role_analysis = get_player_role_analysis(df)
+    synergy_score = 0
+    roles = []
+    
+    for player in team_composition:
+        if player in role_analysis:
+            roles.append(role_analysis[player]['primary_role'])
+    
+    # Bonus for diverse roles
+    unique_roles = len(set(roles))
+    synergy_score += unique_roles * 10
+    
+    # Bonus for specific role combinations
+    if 'Killer' in roles and 'Support' in roles:
+        synergy_score += 20  # Good balance
+    if 'Leader' in roles:
+        synergy_score += 15  # Leadership bonus
+    
+    team_performance['synergy_score'] = min(synergy_score, 100)
+    
+    # Simulate win probability based on team stats
+    base_win_prob = min(team_performance['avg_kd_ratio'] * 25 + team_performance['total_win_rate'] * 0.5, 95)
+    synergy_bonus = team_performance['synergy_score'] * 0.3
+    team_performance['predicted_win_rate'] = min(base_win_prob + synergy_bonus, 95)
+    
+    # If opponent composition is provided, calculate head-to-head prediction
+    if opponent_composition:
+        opponent_stats = {}
+        for player in opponent_composition:
+            player_stats = get_player_stats(df, player)
+            if player_stats:
+                opponent_stats[player] = player_stats
+        
+        if opponent_stats:
+            opponent_performance = {
+                'avg_kd_ratio': sum(stats['kd_ratio'] for stats in opponent_stats.values()) / len(opponent_stats),
+                'total_win_rate': sum(stats['win_rate'] for stats in opponent_stats.values()) / len(opponent_stats)
+            }
+            
+            # Calculate win probability in head-to-head
+            team_strength = team_performance['predicted_win_rate']
+            opponent_strength = min(opponent_performance['avg_kd_ratio'] * 25 + opponent_performance['total_win_rate'] * 0.5, 95)
+            
+            # Adjust based on relative strength
+            strength_diff = team_strength - opponent_strength
+            head_to_head_win_rate = 50 + (strength_diff * 0.8)  # Base 50% + adjustment
+            team_performance['head_to_head_win_rate'] = max(min(head_to_head_win_rate, 95), 5)
+    
+    return team_performance
+
+def get_optimal_team_composition(df, available_players, team_size=3):
+    """Find optimal team composition from available players"""
+    if df.empty or len(available_players) < team_size:
+        return {}
+    
+    from itertools import combinations
+    
+    # Get all possible team combinations
+    possible_teams = list(combinations(available_players, team_size))
+    
+    best_team = None
+    best_score = 0
+    team_analysis = {}
+    
+    for team in possible_teams:
+        team_performance = simulate_team_scenario(df, list(team))
+        if team_performance:
+            # Calculate overall team score
+            team_score = (
+                team_performance['predicted_win_rate'] * 0.4 +
+                team_performance['synergy_score'] * 0.3 +
+                team_performance['avg_kd_ratio'] * 10 * 0.3
+            )
+            
+            team_analysis[team] = {
+                'performance': team_performance,
+                'score': team_score
+            }
+            
+            if team_score > best_score:
+                best_score = team_score
+                best_team = team
+    
+    return {
+        'best_team': list(best_team) if best_team else [],
+        'best_score': best_score,
+        'all_teams': team_analysis,
+        'total_combinations': len(possible_teams)
+    } 

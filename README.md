@@ -134,6 +134,31 @@ The Fun Features page provides gamified elements to make stats tracking more eng
 - **Session Performance**: Compare performance across different sessions
 - **Peak Performance**: Identify optimal gaming periods
 
+## **Interactive Dashboards**
+
+The Interactive Dashboards page provides advanced tools for player comparison and scenario simulation:
+
+### **Player Comparison Tool**
+- **Side-by-Side Comparison**: Visual comparison of two players across all metrics
+- **Interactive Sliders**: Adjust player stats to simulate different scenarios
+- **Detailed Metrics**: K/D ratio, win rate, kills per minute, assists, total matches, total kills
+- **Winner Analysis**: Shows which player wins in each category
+- **Custom Scenarios**: Use sliders to boost or reduce player stats and see the impact
+
+### **Scenario Simulator**
+- **Team Composition Testing**: Simulate different team combinations
+- **Performance Prediction**: Predict win rates and team performance
+- **Synergy Analysis**: Calculate team synergy based on player roles
+- **Head-to-Head Simulation**: Compare your team against opponents
+- **Radar Chart Visualization**: Visual representation of team strengths
+
+### **Optimal Team Finder**
+- **Best Team Discovery**: Find the optimal team composition from available players
+- **Comprehensive Analysis**: Test all possible combinations
+- **Scoring System**: Rank teams by predicted win rate, synergy, and K/D ratio
+- **Top Combinations**: View the best team combinations with detailed stats
+- **Bubble Chart Visualization**: Visual representation of team performance
+
 ## 🛠️ Installation
 
 1. **Clone the repository**:
