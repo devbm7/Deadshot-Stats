@@ -294,7 +294,7 @@ def create_player_comparison_radar(df, players):
     if df.empty or len(players) < 2:
         return go.Figure()
     
-    categories = ['K/D Ratio', 'Avg Kills/Match', 'Avg Assists/Match', 'Total Score', 'Total Matches']
+    categories = ['K/D Ratio', 'Win Rate', 'Avg Kills/Match', 'Avg Assists/Match', 'Total Score']
     
     fig = go.Figure()
     
@@ -303,10 +303,10 @@ def create_player_comparison_radar(df, players):
         if player_stats:
             values = [
                 player_stats['kd_ratio'],
+                player_stats['win_rate'],
                 player_stats['avg_kills_per_match'],
                 player_stats['avg_assists_per_match'],
                 player_stats['total_score'] / 1000,  # Scale down for radar
-                player_stats['total_matches']
             ]
             
             fig.add_trace(go.Scatterpolar(

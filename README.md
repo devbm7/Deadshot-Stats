@@ -19,7 +19,7 @@ A comprehensive gaming statistics dashboard built with Streamlit to track and an
 ### 📈 Player Analysis
 - **Individual Performance**: Detailed stats for each player
 - **Performance Trends**: Track player improvement over time
-- **Player Details**: Favorite weapons, best matches, assists, and averages
+- **Player Details**: Favorite weapons, best matches, assists, wins/losses, and averages
 
 ### 👥 Team Analysis
 - **Team Performance**: Win/loss ratios and team statistics
@@ -27,7 +27,7 @@ A comprehensive gaming statistics dashboard built with Streamlit to track and an
 - **Team Comparisons**: Head-to-head team performance analysis
 
 ### 📋 Leaderboards
-- **Multiple Metrics**: K/D ratio, total kills, assists, average kills, total score, coins
+- **Multiple Metrics**: K/D ratio, total kills, assists, average kills, total score, coins, win rate
 - **Interactive Rankings**: Sortable leaderboards with visual charts
 - **Player Rankings**: See who's performing best in different categories
 
@@ -127,6 +127,7 @@ match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score
 
 ### Individual Performance
 - **K/D Ratio**: Kills divided by deaths
+- **Win Rate**: Percentage of matches won
 - **Total Assists**: Total assists across all matches
 - **Average Kills per Match**: Consistency metric
 - **Average Assists per Match**: Team support metric
@@ -135,7 +136,7 @@ match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score
 
 ### Team Performance
 - **Win Rate**: Percentage of matches won
-- **Team Synergy**: Combined team performance
+- **Team Synergy**: Combined team performance including assists
 - **Average Team Score**: Team scoring consistency
 
 ### Overall Statistics

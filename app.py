@@ -152,9 +152,9 @@ elif page == "📊 Player Analysis":
                 with col1:
                     st.metric("K/D Ratio", f"{player_stats['kd_ratio']}")
                 with col2:
-                    st.metric("Total Kills", player_stats['total_kills'])
+                    st.metric("Win Rate", f"{player_stats['win_rate']}%")
                 with col3:
-                    st.metric("Total Assists", player_stats['total_assists'])
+                    st.metric("Total Kills", player_stats['total_kills'])
                 with col4:
                     st.metric("Total Matches", player_stats['total_matches'])
                 
@@ -168,6 +168,8 @@ elif page == "📊 Player Analysis":
                 with col1:
                     st.subheader("Player Details")
                     st.write(f"**Favorite Weapon:** {player_stats['favorite_weapon']}")
+                    st.write(f"**Wins:** {player_stats['wins']}")
+                    st.write(f"**Losses:** {player_stats['losses']}")
                     st.write(f"**Best Match Kills:** {player_stats['best_match_kills']}")
                     st.write(f"**Best Match Score:** {player_stats['best_match_score']}")
                     st.write(f"**Best Match Assists:** {player_stats['best_match_assists']}")
@@ -435,7 +437,7 @@ elif page == "📋 Leaderboards":
     # Leaderboard type selection
     leaderboard_type = st.selectbox(
         "Leaderboard Type",
-        ["K/D Ratio", "Total Kills", "Avg Kills per Match", "Total Score", "Total Coins", "Total Assists"]
+        ["K/D Ratio", "Total Kills", "Avg Kills per Match", "Total Score", "Total Coins", "Total Assists", "Win Rate"]
     )
     
     # Get leaderboard data
@@ -445,7 +447,8 @@ elif page == "📋 Leaderboards":
         "Avg Kills per Match": "avg_kills_per_match",
         "Total Score": "total_score",
         "Total Coins": "total_coins",
-        "Total Assists": "total_assists"
+        "Total Assists": "total_assists",
+        "Win Rate": "win_rate"
     }
     
     leaderboard_df = get_leaderboard_data(df, metric_map[leaderboard_type])

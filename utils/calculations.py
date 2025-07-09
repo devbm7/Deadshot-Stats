@@ -7,6 +7,47 @@ def calculate_kd_ratio(kills, deaths):
         return kills if kills > 0 else 0
     return round(kills / deaths, 2)
 
+def calculate_player_wins(df, player_name):
+    """Calculate wins for a player"""
+    if df.empty:
+        return 0, 0, 0.0
+    
+    player_matches = df[df['player_name'] == player_name]['match_id'].unique()
+    wins = 0
+    losses = 0
+    
+    for match_id in player_matches:
+        match_data = df[df['match_id'] == match_id]
+        game_mode = match_data.iloc[0]['game_mode']
+        
+        if game_mode == 'Team':
+            # For team matches, determine winner by team score
+            player_team = match_data[match_data['player_name'] == player_name]['team'].iloc[0]
+            team_score = match_data[match_data['team'] == player_team]['score'].sum()
+            other_teams = match_data[match_data['team'] != player_team]
+            
+            if not other_teams.empty:
+                other_team_scores = other_teams.groupby('team')['score'].sum()
+                max_other_score = other_team_scores.max()
+                
+                if team_score > max_other_score:
+                    wins += 1
+                elif team_score < max_other_score:
+                    losses += 1
+                # If equal, it's a draw (no change to wins/losses)
+        else:
+            # For FFA matches, determine winner by individual score
+            player_score = match_data[match_data['player_name'] == player_name]['score'].iloc[0]
+            max_score = match_data['score'].max()
+            
+            if player_score == max_score:
+                wins += 1
+            else:
+                losses += 1
+    
+    win_rate = round((wins / (wins + losses)) * 100, 1) if (wins + losses) > 0 else 0.0
+    return wins, losses, win_rate
+
 def get_player_stats(df, player_name=None):
     """Get comprehensive player statistics"""
     if df.empty:
@@ -20,6 +61,9 @@ def get_player_stats(df, player_name=None):
     if player_df.empty:
         return {}
     
+    # Calculate wins/losses for the player
+    wins, losses, win_rate = calculate_player_wins(df, player_name)
+    
     stats = {
         'total_matches': len(player_df['match_id'].unique()),
         'total_kills': int(player_df['kills'].sum()),
@@ -27,6 +71,9 @@ def get_player_stats(df, player_name=None):
         'total_assists': int(player_df['assists'].sum()) if 'assists' in player_df.columns and not player_df['assists'].isna().all() else 0,
         'total_score': int(player_df['score'].sum()),
         'total_coins': int(player_df['coins'].sum()) if 'coins' in player_df.columns else 0,
+        'wins': wins,
+        'losses': losses,
+        'win_rate': win_rate,
         'avg_kills_per_match': round(player_df.groupby('match_id')['kills'].sum().mean(), 1),
         'avg_deaths_per_match': round(player_df.groupby('match_id')['deaths'].sum().mean(), 1),
         'avg_assists_per_match': round(player_df.groupby('match_id')['assists'].sum().mean(), 1) if 'assists' in player_df.columns and not player_df['assists'].isna().all() else 0,
@@ -65,12 +112,14 @@ def get_team_stats(df):
             
             if not other_teams.empty:
                 team_score = match_data['score'].sum()
-                other_score = other_teams['score'].sum()
+                other_team_scores = other_teams.groupby('team')['score'].sum()
+                max_other_score = other_team_scores.max()
                 
-                if team_score > other_score:
+                if team_score > max_other_score:
                     team_wins += 1
-                else:
+                elif team_score < max_other_score:
                     team_losses += 1
+                # If equal, it's a draw (no change to wins/losses)
         
         team_stats[team] = {
             'matches': len(matches),
@@ -101,6 +150,9 @@ def get_leaderboard_data(df, metric='kd_ratio'):
                 'kd_ratio': player_stats['kd_ratio'],
                 'total_kills': player_stats['total_kills'],
                 'total_assists': player_stats['total_assists'],
+                'wins': player_stats['wins'],
+                'losses': player_stats['losses'],
+                'win_rate': player_stats['win_rate'],
                 'avg_kills_per_match': player_stats['avg_kills_per_match'],
                 'avg_assists_per_match': player_stats['avg_assists_per_match'],
                 'total_score': player_stats['total_score'],
@@ -180,17 +232,27 @@ def get_match_summary(df, match_id):
         return {}
     
     match_info = match_data.iloc[0]
+    game_mode = match_info['game_mode']
+    
+    # Determine winner
+    if game_mode == 'Team':
+        team_scores = match_data.groupby('team')['score'].sum()
+        winning_team = team_scores.idxmax()
+        winner = f"Team {winning_team}"
+    else:
+        # FFA match
+        winner = match_data.loc[match_data['score'].idxmax(), 'player_name']
     
     summary = {
         'match_id': match_id,
         'datetime': match_info['datetime'],
-        'game_mode': match_info['game_mode'],
+        'game_mode': game_mode,
         'map_name': match_info['map_name'],
         'total_players': len(match_data),
         'total_kills': int(match_data['kills'].sum()),
         'total_deaths': int(match_data['deaths'].sum()),
         'total_score': int(match_data['score'].sum()),
-        'winner': match_data.loc[match_data['score'].idxmax(), 'player_name'] if match_data['score'].max() > 0 else 'None',
+        'winner': winner,
         'top_killer': match_data.loc[match_data['kills'].idxmax(), 'player_name'] if match_data['kills'].max() > 0 else 'None',
         'players': match_data[['player_name', 'kills', 'deaths', 'assists', 'score', 'weapon']].to_dict('records')
     }
