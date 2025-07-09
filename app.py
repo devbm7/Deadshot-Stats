@@ -16,12 +16,15 @@ from utils.data_processing import (
 )
 from utils.calculations import (
     get_player_stats, get_team_stats, get_leaderboard_data, get_weapon_stats,
-    get_map_stats, get_recent_activity, get_match_summary
+    get_map_stats, get_recent_activity, get_match_summary, get_player_evolution_timeline,
+    get_performance_clusters, get_player_streaks
 )
 from utils.visualizations import (
     create_overview_cards, create_kd_leaderboard_chart, create_player_performance_trend,
     create_weapon_usage_chart, create_map_performance_chart, create_team_performance_chart,
-    create_player_comparison_radar, create_match_timeline, create_ping_impact_chart
+    create_player_comparison_radar, create_match_timeline, create_ping_impact_chart,
+    create_mode_wise_analysis, create_map_wise_analysis, create_weapon_map_analysis,
+    create_player_evolution_chart, create_performance_clusters_chart, create_streak_analysis_chart
 )
 
 # Page configuration
@@ -154,12 +157,12 @@ elif page == "📊 Player Analysis":
                 with col2:
                     st.metric("Win Rate", f"{player_stats['win_rate']}%")
                 with col3:
-                    st.metric("Total Kills", player_stats['total_kills'])
+                    st.metric("Kills/Min", f"{player_stats['kills_per_minute']}")
                 with col4:
                     st.metric("Total Matches", player_stats['total_matches'])
                 
                 # Performance trend
-                st.subheader("Performance Over Time")
+                st.subheader("Performance Over Time (Per-Minute)")
                 st.plotly_chart(create_player_performance_trend(df, selected_player), use_container_width=True, key="player_performance_trend")
                 
                 # Player details
@@ -170,6 +173,7 @@ elif page == "📊 Player Analysis":
                     st.write(f"**Favorite Weapon:** {player_stats['favorite_weapon']}")
                     st.write(f"**Wins:** {player_stats['wins']}")
                     st.write(f"**Losses:** {player_stats['losses']}")
+                    st.write(f"**Total Time Played:** {player_stats['total_minutes']} minutes")
                     st.write(f"**Best Match Kills:** {player_stats['best_match_kills']}")
                     st.write(f"**Best Match Score:** {player_stats['best_match_score']}")
                     st.write(f"**Best Match Assists:** {player_stats['best_match_assists']}")
@@ -177,11 +181,11 @@ elif page == "📊 Player Analysis":
                         st.write(f"**Average Ping:** {player_stats['avg_ping']}ms")
                 
                 with col2:
-                    st.subheader("Averages")
-                    st.write(f"**Kills per Match:** {player_stats['avg_kills_per_match']}")
-                    st.write(f"**Deaths per Match:** {player_stats['avg_deaths_per_match']}")
-                    st.write(f"**Assists per Match:** {player_stats['avg_assists_per_match']}")
-                    st.write(f"**Score per Match:** {player_stats['avg_score_per_match']}")
+                    st.subheader("Per-Minute Metrics")
+                    st.write(f"**Kills per Minute:** {player_stats['kills_per_minute']}")
+                    st.write(f"**Deaths per Minute:** {player_stats['deaths_per_minute']}")
+                    st.write(f"**Assists per Minute:** {player_stats['assists_per_minute']}")
+                    st.write(f"**Score per Minute:** {player_stats['score_per_minute']}")
                     st.write(f"**Total Coins:** {player_stats['total_coins']}")
     else:
         st.info("No player data available. Add some matches first!")
@@ -400,8 +404,127 @@ elif page == "🎮 Data Input":
 elif page == "🔧 Advanced Analytics":
     st.title("🔧 Advanced Analytics")
     
+    # Get unique players
+    players = get_unique_players(df)
+    
+    # Advanced Analytics
+    st.header("🔬 Advanced Analytics")
+    
+    # Player Evolution Timeline
+    st.subheader("📈 Player Evolution Timeline")
+    selected_player_evolution = st.selectbox(
+        "Select player for evolution analysis:",
+        options=players,
+        key="evolution_player"
+    )
+    
+    if selected_player_evolution:
+        evolution_fig = create_player_evolution_chart(df, selected_player_evolution)
+        st.plotly_chart(evolution_fig, use_container_width=True, key="evolution_chart")
+        
+        # Show evolution insights
+        evolution_data = get_player_evolution_timeline(df, selected_player_evolution)
+        if evolution_data:
+            evolution_df = pd.DataFrame(evolution_data)
+            if len(evolution_df) > 1:
+                first_match = evolution_df.iloc[0]
+                last_match = evolution_df.iloc[-1]
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("K/D Improvement", 
+                            f"{last_match['kd_ratio'] - first_match['kd_ratio']:.2f}",
+                            f"{first_match['kd_ratio']:.2f} → {last_match['kd_ratio']:.2f}")
+                with col2:
+                    st.metric("Kills/Min Improvement",
+                            f"{last_match['kills_per_minute'] - first_match['kills_per_minute']:.2f}",
+                            f"{first_match['kills_per_minute']:.2f} → {last_match['kills_per_minute']:.2f}")
+                with col3:
+                    st.metric("Score/Min Improvement",
+                            f"{last_match['score_per_minute'] - first_match['score_per_minute']:.2f}",
+                            f"{first_match['score_per_minute']:.2f} → {last_match['score_per_minute']:.2f}")
+    
+    # Performance Clusters
+    st.subheader("🎯 Performance Clusters")
+    st.write("Players grouped by similar playing styles based on K/D ratio, kills per minute, assists, and win rate.")
+    
+    clusters_fig = create_performance_clusters_chart(df)
+    st.plotly_chart(clusters_fig, use_container_width=True, key="clusters_chart")
+    
+    # Show cluster details
+    cluster_stats = get_performance_clusters(df)
+    if cluster_stats:
+        st.write("**Cluster Analysis:**")
+        for cluster_id, stats in cluster_stats.items():
+            with st.expander(f"Cluster {cluster_id + 1} ({stats['cluster_size']} players)"):
+                st.write(f"**Players:** {', '.join(stats['players'])}")
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Avg K/D Ratio", f"{stats['avg_kd_ratio']:.2f}")
+                    st.metric("Avg Kills/Min", f"{stats['avg_kills_per_min']:.2f}")
+                with col2:
+                    st.metric("Avg Assists/Min", f"{stats['avg_assists_per_min']:.2f}")
+                    st.metric("Avg Win Rate", f"{stats['avg_win_rate']:.1f}%")
+                with col3:
+                    st.write("**Cluster Characteristics:**")
+                    if stats['avg_kd_ratio'] > 1.5 and stats['avg_win_rate'] > 60:
+                        st.success("High Performers")
+                    elif stats['avg_kd_ratio'] < 0.8 and stats['avg_win_rate'] < 40:
+                        st.error("Struggling Players")
+                    else:
+                        st.info("Balanced Players")
+    
+    # Streak Analysis
+    st.subheader("🔥 Streak Analysis")
+    selected_player_streak = st.selectbox(
+        "Select player for streak analysis:",
+        options=players,
+        key="streak_player"
+    )
+    
+    if selected_player_streak:
+        streak_fig = create_streak_analysis_chart(df, selected_player_streak)
+        st.plotly_chart(streak_fig, use_container_width=True, key="streak_chart")
+        
+        # Show streak details
+        streak_data = get_player_streaks(df, selected_player_streak)
+        if streak_data:
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Current Streak", 
+                        streak_data['current_streak'])
+            with col2:
+                st.metric("Max Win Streak", streak_data['max_win_streak'])
+            with col3:
+                st.metric("Max Loss Streak", streak_data['max_loss_streak'])
+            with col4:
+                st.metric("Recent Win Rate", f"{streak_data['recent_win_rate']:.1f}%")
+                
+                # Streak insights
+                if streak_data['current_streak'] > 0:
+                    st.success(f"🔥 {selected_player_streak} is on a {streak_data['current_streak']}-match winning streak!")
+                elif streak_data['current_streak'] < 0:
+                    st.error(f"😔 {selected_player_streak} is on a {abs(streak_data['current_streak'])}-match losing streak.")
+                else:
+                    st.info(f"⚖️ {selected_player_streak} broke their streak in the last match.")
+    
+    # Mode-wise Analysis
+    st.subheader("🎮 Game Mode Analysis")
+    mode_fig = create_mode_wise_analysis(df)
+    st.plotly_chart(mode_fig, use_container_width=True, key="mode_analysis_chart")
+    
+    # Map-wise Analysis
+    st.subheader("🗺️ Map Performance Analysis")
+    map_fig = create_map_wise_analysis(df)
+    st.plotly_chart(map_fig, use_container_width=True, key="map_analysis_chart")
+    
+    # Weapon-Map Combinations
+    st.subheader("🔫 Weapon-Map Combinations")
+    weapon_map_fig = create_weapon_map_analysis(df)
+    st.plotly_chart(weapon_map_fig, use_container_width=True, key="weapon_map_chart")
+    
     # Player comparison
-    st.subheader("Player Comparison")
+    st.subheader("👥 Player Comparison")
     players = get_unique_players(df)
     if len(players) >= 2:
         selected_players = st.multiselect("Select Players to Compare", players, max_selections=5)
@@ -409,11 +532,11 @@ elif page == "🔧 Advanced Analytics":
             st.plotly_chart(create_player_comparison_radar(df, selected_players), use_container_width=True, key="player_comparison_radar")
     
     # Ping impact analysis
-    st.subheader("Ping Impact Analysis")
+    st.subheader("📡 Ping Impact Analysis")
     st.plotly_chart(create_ping_impact_chart(df), use_container_width=True, key="ping_impact_chart")
     
     # Weapon meta analysis
-    st.subheader("Weapon Meta Analysis")
+    st.subheader("⚔️ Weapon Meta Analysis")
     weapon_stats = get_weapon_stats(df)
     if weapon_stats:
         weapon_df = pd.DataFrame.from_dict(weapon_stats, orient='index')

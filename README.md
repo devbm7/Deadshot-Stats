@@ -42,6 +42,40 @@ A comprehensive gaming statistics dashboard built with Streamlit to track and an
 - **Match Timeline**: Visual timeline of all matches
 - **Map Analysis**: Performance statistics for different maps
 
+## **Advanced Analytics**
+
+The Advanced Analytics page provides deep insights into player performance patterns:
+
+### **Player Evolution Timeline**
+- **Trend Analysis**: Track how players improve over time with moving averages
+- **Performance Metrics**: K/D ratio, kills per minute, and score per minute evolution
+- **Improvement Insights**: Compare first and latest match performance
+
+### **Performance Clusters**
+- **Player Grouping**: Machine learning clustering based on playing styles
+- **Cluster Characteristics**: Groups players by K/D ratio, kills per minute, assists, and win rate
+- **Cluster Analysis**: Identifies high performers, balanced players, and struggling players
+
+### **Streak Analysis**
+- **Win/Loss Streaks**: Track current and maximum streaks for each player
+- **Recent Performance**: Win rate in last 10 matches
+- **Streak Insights**: Visual indicators for ongoing streaks
+
+### **Game Mode Analysis**
+- **Mode Comparison**: Team vs FFA performance metrics
+- **Normalized Metrics**: Per-minute statistics to avoid bias from match length
+- **Player Distribution**: Matches per player across different modes
+
+### **Map Performance Analysis**
+- **Map Heatmaps**: Visual representation of performance across maps
+- **Per-Minute Metrics**: Normalized statistics for fair comparison
+- **Map Preferences**: Which maps favor different play styles
+
+### **Weapon-Map Combinations**
+- **Effectiveness Matrix**: Which weapons perform best on which maps
+- **Usage Patterns**: Most popular weapon choices per map
+- **Performance Correlation**: Weapon effectiveness vs map characteristics
+
 ## 🛠️ Installation
 
 1. **Clone the repository**:
