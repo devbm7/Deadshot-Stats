@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import sys
 import os
+from PIL import Image
 
 # Add utils to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -32,6 +33,10 @@ from utils.visualizations import (
     create_battle_royale_rankings_chart, create_achievement_badges_chart, create_gaming_session_analysis_chart,
     create_achievement_details, create_player_comparison_chart, create_scenario_simulation_chart,
     create_optimal_team_chart
+)
+from utils.image_processing import (
+    extract_data_from_image, validate_extracted_data, format_extracted_data_for_display,
+    get_extraction_confidence
 )
 
 # Page configuration
@@ -456,123 +461,417 @@ elif page == "📈 Match History":
 elif page == "🎮 Data Input":
     st.title("🎮 Add Match Data")
     
-    # Match metadata
-    st.subheader("Match Information")
-    col1, col2, col3 = st.columns(3)
+    # Create tabs for different input methods
+    input_tab1, input_tab2 = st.tabs(["📷 Image Upload", "✏️ Manual Input"])
     
-    with col1:
-        # Use date and time inputs separately since datetime_input doesn't exist
-        match_date = st.date_input("Match Date", value=datetime.now().date())
-        match_time = st.time_input("Match Time", value=datetime.now().time())
-        match_datetime = datetime.combine(match_date, match_time)
-    
-    with col2:
-        game_mode = st.selectbox("Game Mode", ["Team", "FFA"])
-    
-    with col3:
-        maps = get_unique_maps(df)
-        if maps:
-            map_name = st.selectbox("Map", maps)
+    with input_tab1:
+        st.subheader("📷 Upload Screenshot")
+        st.write("Upload a screenshot of the match results to automatically extract data using AI.")
+        
+        # API Key input
+        api_key = st.text_input("Gemini API Key", type="password", 
+                               help="Enter your Google Gemini API key. Get one from https://makersuite.google.com/app/apikey")
+        
+        if not api_key:
+            st.warning("Please enter your Gemini API key to use image extraction.")
+            st.info("💡 **How to get an API key:**\n1. Go to https://makersuite.google.com/app/apikey\n2. Sign in with your Google account\n3. Create a new API key\n4. Copy and paste it here")
         else:
-            map_name = st.text_input("Map Name", "Desert")
-        match_length = st.selectbox("Match Length (minutes)", [5, 10, 20], index=1)
-    
-    # Player data input
-    st.subheader("Player Data")
-    
-    # Initialize player data
-    if 'player_data' not in st.session_state:
-        st.session_state.player_data = []
-    
-    # Add new player button
-    if st.button("➕ Add Player"):
-        st.session_state.player_data.append({
-            'player_name': '',
-            'kills': 0,
-            'deaths': 0,
-            'assists': 0,
-            'score': 0,
-            'weapon': 'AK47',
-            'ping': None,
-            'coins': 0,
-            'team': None
-        })
-    
-    # Display and edit player data
-    for i, player in enumerate(st.session_state.player_data):
-        with st.expander(f"Player {i+1}", expanded=True):
-            col1, col2, col3 = st.columns(3)
+            # File upload
+            uploaded_file = st.file_uploader(
+                "Choose a screenshot file", 
+                type=['png', 'jpg', 'jpeg'],
+                help="Upload a screenshot of the match results"
+            )
             
-            with col1:
-                players = get_unique_players(df)
-                if players:
-                    player['player_name'] = st.selectbox(
-                        f"Player Name {i+1}", 
-                        ["New Player"] + players,
-                        key=f"player_name_{i}"
-                    )
-                else:
-                    player['player_name'] = st.text_input(f"Player Name {i+1}", key=f"player_name_{i}")
+            if uploaded_file is not None:
+                # Display the uploaded image
+                image = Image.open(uploaded_file)
+                st.image(image, caption="Uploaded Screenshot", use_column_width=True)
                 
-                player['kills'] = st.number_input(f"Kills {i+1}", min_value=0, value=player['kills'], key=f"kills_{i}")
-                player['deaths'] = st.number_input(f"Deaths {i+1}", min_value=0, value=player['deaths'], key=f"deaths_{i}")
+                # Extract data button
+                if st.button("🔍 Extract Data from Image", type="primary"):
+                    with st.spinner("Analyzing image with AI..."):
+                        extracted_data = extract_data_from_image(image, api_key)
+                        
+                        if "error" not in extracted_data:
+                            # Validate extracted data
+                            validation_errors = validate_extracted_data(extracted_data)
+                            
+                            if validation_errors:
+                                st.error("❌ Data extraction issues:")
+                                for error in validation_errors:
+                                    st.error(f"• {error}")
+                            else:
+                                # Format data for display
+                                formatted_data = format_extracted_data_for_display(extracted_data)
+                                confidence = get_extraction_confidence(extracted_data)
+                                
+                                # Show confidence indicator
+                                if confidence == "high":
+                                    st.success("✅ High confidence extraction")
+                                elif confidence == "medium":
+                                    st.warning("⚠️ Medium confidence extraction")
+                                else:
+                                    st.info("ℹ️ Low confidence extraction")
+                                
+                                # Store extracted data in session state
+                                st.session_state.extracted_data = formatted_data
+                                st.session_state.extraction_success = True
+                                
+                                st.success("Data extracted successfully! Review and edit below.")
+                                
+                                # Debug: Show raw extracted data
+                                with st.expander("🔍 Debug: Raw Extracted Data"):
+                                    st.json(extracted_data)
+                                
+                                st.rerun()
+                        else:
+                            st.error(f"❌ Extraction failed: {extracted_data['error']}")
             
-            with col2:
-                if game_mode == "Team":
-                    player['assists'] = st.number_input(f"Assists {i+1}", min_value=0, value=player['assists'], key=f"assists_{i}")
-                    player['team'] = st.selectbox(f"Team {i+1}", ["Team1", "Team2"], key=f"team_{i}")
-                else:
-                    player['assists'] = None
-                    player['team'] = None
+            # Show extracted data for review
+            if hasattr(st.session_state, 'extraction_success') and st.session_state.extraction_success:
+                st.subheader("📋 Review Extracted Data")
                 
-                player['score'] = st.number_input(f"Score {i+1}", min_value=0, value=player['score'], key=f"score_{i}")
-            
-            with col3:
-                weapons = get_unique_weapons(df)
-                if weapons:
-                    player['weapon'] = st.selectbox(f"Weapon {i+1}", weapons, key=f"weapon_{i}")
-                else:
-                    player['weapon'] = st.text_input(f"Weapon {i+1}", value=player['weapon'], key=f"weapon_{i}")
+                extracted_data = st.session_state.extracted_data
                 
-                player['ping'] = st.number_input(f"Ping {i+1}", min_value=0, value=player['ping'] or 50, key=f"ping_{i}")
-                player['coins'] = st.number_input(f"Coins {i+1}", min_value=0, value=player['coins'], key=f"coins_{i}")
+                # Match metadata
+                st.write("**Match Information:**")
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    match_date = st.date_input("Match Date", value=datetime.now().date(), key="extracted_date")
+                    match_time = st.time_input("Match Time", value=datetime.now().time(), key="extracted_time")
+                    match_datetime = datetime.combine(match_date, match_time)
+                
+                with col2:
+                    game_mode = st.selectbox("Game Mode", ["Team", "FFA"], 
+                                           index=0 if extracted_data.get("game_mode") == "Team" else 1,
+                                           key="extracted_game_mode")
+                
+                with col3:
+                    maps = get_unique_maps(df)
+                    if maps:
+                        default_map = extracted_data.get("map_name") if extracted_data.get("map_name") in maps else maps[0]
+                        map_name = st.selectbox("Map", maps, index=maps.index(default_map) if default_map in maps else 0, key="extracted_map")
+                    else:
+                        map_name = st.text_input("Map Name", value=extracted_data.get("map_name", "Desert"), key="extracted_map")
+                    
+                    match_length = st.selectbox("Match Length (minutes)", [5, 10, 20], 
+                                              index=[5, 10, 20].index(extracted_data.get("match_length", 10)) if extracted_data.get("match_length") in [5, 10, 20] else 1,
+                                              key="extracted_match_length")
+                
+                # Player data review
+                st.write("**Player Data:**")
+                
+                # Initialize player data from extracted data
+                if 'extracted_player_data' not in st.session_state:
+                    st.session_state.extracted_player_data = []
+                
+                # Clear existing data and populate with extracted data
+                st.session_state.extracted_player_data = []
+                for player in extracted_data.get("players", []):
+                    st.session_state.extracted_player_data.append({
+                        'player_name': player.get('player_name', ''),
+                        'original_name': player.get('player_name', ''),  # Store original name for reference
+                        'kills': player.get('kills', 0),
+                        'deaths': player.get('deaths', 0),
+                        'assists': player.get('assists'),
+                        'score': player.get('score', 0),
+                        'weapon': player.get('weapon', 'AK47'),
+                        'ping': player.get('ping'),
+                        'coins': player.get('coins', 0),
+                        'team': player.get('team')
+                    })
+                
+                # Display and edit player data
+                for i, player in enumerate(st.session_state.extracted_player_data):
+                    with st.expander(f"Player {i+1}: {player['player_name']}", expanded=True):
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            players = get_unique_players(df)
+                            
+                            # Create a more flexible player name input
+                            st.write(f"**Player {i+1} Name:**")
+                            
+                            # Option 1: Dropdown for existing players
+                            if players:
+                                col_dropdown, col_text = st.columns([1, 1])
+                                
+                                with col_dropdown:
+                                    st.write("**Existing Players:**")
+                                    # Check if the extracted player name exists in the list
+                                    current_player_name = player['player_name']
+                                    if current_player_name and current_player_name in players:
+                                        # Player exists, use their index + 1 (since "New Player" is at index 0)
+                                        selected_index = players.index(current_player_name) + 1
+                                    else:
+                                        # Player doesn't exist, default to "New Player"
+                                        selected_index = 0
+                                    
+                                    selected_player = st.selectbox(
+                                        f"Select from existing players", 
+                                        ["New Player"] + players,
+                                        index=selected_index,
+                                        key=f"extracted_player_dropdown_{i}"
+                                    )
+                                
+                                with col_text:
+                                    st.write("**Or type custom name:**")
+                                    custom_name = st.text_input(
+                                        f"Custom player name", 
+                                        value=player['player_name'] if player['player_name'] not in players else "",
+                                        key=f"extracted_player_text_{i}"
+                                    )
+                                
+                                # Use custom name if provided, otherwise use dropdown selection
+                                if custom_name and custom_name.strip():
+                                    player['player_name'] = custom_name.strip()
+                                else:
+                                    player['player_name'] = selected_player
+                                
+                                # Show AI detection hint
+                                if player.get('original_name') and player['player_name'] == "New Player":
+                                    st.info(f"💡 AI detected: '{player.get('original_name')}'. Type it above if correct.")
+                            else:
+                                # No existing players, just use text input
+                                player['player_name'] = st.text_input(f"Player Name {i+1}", value=player['player_name'], key=f"extracted_player_name_{i}")
+                            
+                            player['kills'] = st.number_input(f"Kills {i+1}", min_value=0, value=player['kills'], key=f"extracted_kills_{i}")
+                            player['deaths'] = st.number_input(f"Deaths {i+1}", min_value=0, value=player['deaths'], key=f"extracted_deaths_{i}")
+                        
+                        with col2:
+                            if game_mode == "Team":
+                                player['assists'] = st.number_input(f"Assists {i+1}", min_value=0, value=player['assists'] or 0, key=f"extracted_assists_{i}")
+                                player['team'] = st.selectbox(f"Team {i+1}", ["Team1", "Team2"], 
+                                                           index=0 if player.get('team') == "Team1" else 1,
+                                                           key=f"extracted_team_{i}")
+                            else:
+                                player['assists'] = None
+                                player['team'] = None
+                            
+                            player['score'] = st.number_input(f"Score {i+1}", min_value=0, value=player['score'], key=f"extracted_score_{i}")
+                        
+                        with col3:
+                            weapons = get_unique_weapons(df)
+                            if weapons:
+                                default_weapon = player['weapon'] if player['weapon'] in weapons else weapons[0]
+                                player['weapon'] = st.selectbox(f"Weapon {i+1}", weapons, 
+                                                             index=weapons.index(default_weapon) if default_weapon in weapons else 0,
+                                                             key=f"extracted_weapon_{i}")
+                            else:
+                                player['weapon'] = st.text_input(f"Weapon {i+1}", value=player['weapon'], key=f"extracted_weapon_{i}")
+                            
+                            player['ping'] = st.number_input(f"Ping {i+1}", min_value=0, value=player['ping'] or 50, key=f"extracted_ping_{i}")
+                            player['coins'] = st.number_input(f"Coins {i+1}", min_value=0, value=player['coins'], key=f"extracted_coins_{i}")
+                        
+                        # Remove player button
+                        if st.button(f"❌ Remove Player {i+1}", key=f"extracted_remove_{i}"):
+                            st.session_state.extracted_player_data.pop(i)
+                            st.rerun()
+                
+                # Add new player button
+                if st.button("➕ Add Player", key="extracted_add_player"):
+                    st.session_state.extracted_player_data.append({
+                        'player_name': '',
+                        'original_name': '',
+                        'kills': 0,
+                        'deaths': 0,
+                        'assists': 0,
+                        'score': 0,
+                        'weapon': 'AK47',
+                        'ping': None,
+                        'coins': 0,
+                        'team': None
+                    })
+                    st.rerun()
+                
+                # Save match button
+                if st.button("💾 Save Match", key="extracted_save_match") and st.session_state.extracted_player_data:
+                    # Prepare match data
+                    match_id = get_next_match_id(df)
+                    match_data = []
+                    
+                    valid_players = 0
+                    for player in st.session_state.extracted_player_data:
+                        if player['player_name'] and player['player_name'] != "New Player":
+                            player_data = player.copy()
+                            # Remove the original_name field as it's not part of the data schema
+                            if 'original_name' in player_data:
+                                del player_data['original_name']
+                            player_data['match_id'] = match_id
+                            player_data['datetime'] = match_datetime
+                            player_data['game_mode'] = game_mode
+                            player_data['map_name'] = map_name
+                            player_data['match_length'] = match_length
+                            match_data.append(player_data)
+                            valid_players += 1
+                    
+                    if valid_players == 0:
+                        st.error("❌ No valid players found. Please ensure at least one player has a valid name.")
+                    else:
+                        # Validate data
+                        errors = validate_match_data(match_data)
+                        
+                        if errors:
+                            st.error("Validation errors:")
+                            for error in errors:
+                                st.error(error)
+                        else:
+                            # Save to dataframe
+                            df = add_match_to_dataframe(df, match_data)
+                            save_match_data(df)
+                            st.session_state.match_data = df
+                            st.session_state.extracted_player_data = []
+                            st.session_state.extraction_success = False
+                            if 'extracted_data' in st.session_state:
+                                del st.session_state.extracted_data
+                            st.success(f"✅ Match saved successfully! {valid_players} players added.")
+                            st.rerun()
+    
+    with input_tab2:
+        st.subheader("✏️ Manual Data Entry")
+        st.write("Enter match data manually.")
+        
+        # Match metadata
+        st.write("**Match Information:**")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            # Use date and time inputs separately since datetime_input doesn't exist
+            match_date = st.date_input("Match Date", value=datetime.now().date(), key="manual_date")
+            match_time = st.time_input("Match Time", value=datetime.now().time(), key="manual_time")
+            match_datetime = datetime.combine(match_date, match_time)
+        
+        with col2:
+            game_mode = st.selectbox("Game Mode", ["Team", "FFA"], key="manual_game_mode")
+        
+        with col3:
+            maps = get_unique_maps(df)
+            if maps:
+                map_name = st.selectbox("Map", maps, key="manual_map")
+            else:
+                map_name = st.text_input("Map Name", "Desert", key="manual_map")
+            match_length = st.selectbox("Match Length (minutes)", [5, 10, 20], index=1, key="manual_match_length")
+        
+        # Player data input
+        st.subheader("Player Data")
+        
+        # Initialize player data for manual input
+        if 'manual_player_data' not in st.session_state:
+            st.session_state.manual_player_data = []
+        
+        # Add new player button
+        if st.button("➕ Add Player", key="manual_add_player"):
+            st.session_state.manual_player_data.append({
+                'player_name': '',
+                'kills': 0,
+                'deaths': 0,
+                'assists': 0,
+                'score': 0,
+                'weapon': 'AK47',
+                'ping': None,
+                'coins': 0,
+                'team': None
+            })
+        
+        # Display and edit player data
+        for i, player in enumerate(st.session_state.manual_player_data):
+            with st.expander(f"Player {i+1}", expanded=True):
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    players = get_unique_players(df)
+                    
+                    # Create a more flexible player name input for manual entry
+                    st.write(f"**Player {i+1} Name:**")
+                    
+                    if players:
+                        col_dropdown, col_text = st.columns([1, 1])
+                        
+                        with col_dropdown:
+                            st.write("**Existing Players:**")
+                            selected_player = st.selectbox(
+                                f"Select from existing players", 
+                                ["New Player"] + players,
+                                key=f"manual_player_dropdown_{i}"
+                            )
+                        
+                        with col_text:
+                            st.write("**Or type custom name:**")
+                            custom_name = st.text_input(
+                                f"Custom player name", 
+                                key=f"manual_player_text_{i}"
+                            )
+                        
+                        # Use custom name if provided, otherwise use dropdown selection
+                        if custom_name and custom_name.strip():
+                            player['player_name'] = custom_name.strip()
+                        else:
+                            player['player_name'] = selected_player
+                    else:
+                        # No existing players, just use text input
+                        player['player_name'] = st.text_input(f"Player Name {i+1}", key=f"manual_player_name_{i}")
+                    
+                    player['kills'] = st.number_input(f"Kills {i+1}", min_value=0, value=player['kills'], key=f"manual_kills_{i}")
+                    player['deaths'] = st.number_input(f"Deaths {i+1}", min_value=0, value=player['deaths'], key=f"manual_deaths_{i}")
+                
+                with col2:
+                    if game_mode == "Team":
+                        player['assists'] = st.number_input(f"Assists {i+1}", min_value=0, value=player['assists'], key=f"manual_assists_{i}")
+                        player['team'] = st.selectbox(f"Team {i+1}", ["Team1", "Team2"], key=f"manual_team_{i}")
+                    else:
+                        player['assists'] = None
+                        player['team'] = None
+                    
+                    player['score'] = st.number_input(f"Score {i+1}", min_value=0, value=player['score'], key=f"manual_score_{i}")
+                
+                with col3:
+                    weapons = get_unique_weapons(df)
+                    if weapons:
+                        player['weapon'] = st.selectbox(f"Weapon {i+1}", weapons, key=f"manual_weapon_{i}")
+                    else:
+                        player['weapon'] = st.text_input(f"Weapon {i+1}", value=player['weapon'], key=f"manual_weapon_{i}")
+                    
+                    player['ping'] = st.number_input(f"Ping {i+1}", min_value=0, value=player['ping'] or 50, key=f"manual_ping_{i}")
+                    player['coins'] = st.number_input(f"Coins {i+1}", min_value=0, value=player['coins'], key=f"manual_coins_{i}")
+                
+                # Remove player button
+                if st.button(f"❌ Remove Player {i+1}", key=f"manual_remove_{i}"):
+                    st.session_state.manual_player_data.pop(i)
+                    st.rerun()
+        
+        # Save match button
+        if st.button("💾 Save Match", key="manual_save_match") and st.session_state.manual_player_data:
+            # Prepare match data
+            match_id = get_next_match_id(df)
+            match_data = []
             
-            # Remove player button
-            if st.button(f"❌ Remove Player {i+1}", key=f"remove_{i}"):
-                st.session_state.player_data.pop(i)
+            for player in st.session_state.manual_player_data:
+                if player['player_name'] and player['player_name'] != "New Player":
+                    player_data = player.copy()
+                    player_data['match_id'] = match_id
+                    player_data['datetime'] = match_datetime
+                    player_data['game_mode'] = game_mode
+                    player_data['map_name'] = map_name
+                    player_data['match_length'] = match_length
+                    match_data.append(player_data)
+            
+            # Validate data
+            errors = validate_match_data(match_data)
+            
+            if errors:
+                st.error("Validation errors:")
+                for error in errors:
+                    st.error(error)
+            else:
+                # Save to dataframe
+                df = add_match_to_dataframe(df, match_data)
+                save_match_data(df)
+                st.session_state.match_data = df
+                st.session_state.manual_player_data = []
+                st.success("Match saved successfully!")
                 st.rerun()
-    
-    # Save match button
-    if st.button("💾 Save Match") and st.session_state.player_data:
-        # Prepare match data
-        match_id = get_next_match_id(df)
-        match_data = []
-        
-        for player in st.session_state.player_data:
-            if player['player_name'] and player['player_name'] != "New Player":
-                player_data = player.copy()
-                player_data['match_id'] = match_id
-                player_data['datetime'] = match_datetime
-                player_data['game_mode'] = game_mode
-                player_data['map_name'] = map_name
-                player_data['match_length'] = match_length
-                match_data.append(player_data)
-        
-        # Validate data
-        errors = validate_match_data(match_data)
-        
-        if errors:
-            st.error("Validation errors:")
-            for error in errors:
-                st.error(error)
-        else:
-            # Save to dataframe
-            df = add_match_to_dataframe(df, match_data)
-            save_match_data(df)
-            st.session_state.match_data = df
-            st.session_state.player_data = []
-            st.success("Match saved successfully!")
-            st.rerun()
 
 # Advanced Analytics Page
 elif page == "🔧 Advanced Analytics":

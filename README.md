@@ -195,12 +195,29 @@ The Interactive Dashboards page provides advanced tools for player comparison an
    ```bash
    pip install -r requirements.txt
    ```
-3. **Run the application**:
+3. **Get a Gemini API Key** (for image extraction feature):
+
+   - Go to https://makersuite.google.com/app/apikey
+   - Sign in with your Google account
+   - Create a new API key
+   - Copy the key for use in the application
+
+4. **Run the application**:
 
    ```bash
    streamlit run app.py
    ```
-4. **Open your browser** and navigate to `http://localhost:8501`
+5. **Open your browser** and navigate to `http://localhost:8501`
+
+### 🔑 API Key Setup
+
+The image extraction feature requires a Google Gemini API key:
+
+1. **Get API Key**: Visit https://makersuite.google.com/app/apikey
+2. **Enter in App**: Paste your API key in the "Gemini API Key" field
+3. **Test**: Upload a screenshot to test the extraction feature
+
+> **Note**: The API key is only used for image analysis and is not stored permanently.
 
 ## 📁 Project Structure
 
@@ -209,12 +226,18 @@ deadshot-stats/
 ├── app.py                 # Main Streamlit application
 ├── requirements.txt       # Python dependencies
 ├── README.md             # This file
+├── test_image_extraction.py # Test script for image extraction
 ├── data/
-│   └── matches.csv       # Match data storage
+│   ├── matches.csv       # Match data storage
+│   └── Images/           # Example screenshots and assets
+│       ├── Example Results/
+│       ├── Guns/
+│       └── Maps/
 └── utils/
     ├── data_processing.py # Data loading and validation
     ├── calculations.py    # Statistical calculations
-    └── visualizations.py  # Chart and plot creation
+    ├── visualizations.py  # Chart and plot creation
+    └── image_processing.py # AI-powered image data extraction
 ```
 
 ## 📊 Data Schema
@@ -246,11 +269,43 @@ match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score
 
 ### Adding Match Data
 
+#### 👥 Managing Players
+
+The system supports both existing players and custom player names:
+
+**Existing Players**: Choose from a dropdown of players who have played before
+**Custom Names**: Type any player name for new players
+
+**Current Players in System**:
+- DevilOHeaven
+- MaXiMus22  
+- Heet63
+- Alice, Bob, Charlie, David (sample players)
+
+**To Add New Players**:
+1. Run the utility script: `python add_players.py`
+2. Edit the `new_players` list in the script
+3. Or simply type new player names when adding match data
+
+#### 📷 Image Upload (AI-Powered)
 1. Navigate to the **"🎮 Data Input"** page
-2. Fill in match information (date, game mode, map)
-3. Click **"➕ Add Player"** to add players
-4. Enter each player's statistics
-5. Click **"💾 Save Match"** to save the data
+2. Select the **"📷 Image Upload"** tab
+3. Enter your **Gemini API Key** (get one from https://makersuite.google.com/app/apikey)
+4. Upload a screenshot of the match results
+5. Click **"🔍 Extract Data from Image"** to automatically extract data using AI
+6. Review and edit the extracted data:
+   - **Player Names**: Choose from existing players or type custom names
+   - **Stats**: Verify kills, deaths, assists, score, weapon, ping, coins
+   - **Match Info**: Confirm date, game mode, map, match length
+7. Click **"💾 Save Match"** to save the data
+
+#### ✏️ Manual Input
+1. Navigate to the **"🎮 Data Input"** page
+2. Select the **"✏️ Manual Input"** tab
+3. Fill in match information (date, game mode, map)
+4. Click **"➕ Add Player"** to add players
+5. Enter each player's statistics
+6. Click **"💾 Save Match"** to save the data
 
 ### Viewing Analytics
 
