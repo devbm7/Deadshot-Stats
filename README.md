@@ -182,6 +182,66 @@ The Interactive Dashboards page provides advanced tools for player comparison an
 - **Top Combinations**: View the best team combinations with detailed stats
 - **Bubble Chart Visualization**: Visual representation of team performance
 
+## ☁️ Cloud Data Storage with Supabase
+
+This app now supports cloud data storage using Supabase, which provides:
+
+- **Persistent Data**: Your match data persists across deployments and sessions
+- **Multi-User Support**: Multiple users can access the same data
+- **Real-time Updates**: Changes are reflected immediately across all users
+- **Automatic Backups**: Your data is safely stored in the cloud
+- **Scalable**: Handles growing datasets efficiently
+
+### Supabase Setup
+
+1. **Create a Supabase Project**:
+   - Go to [supabase.com](https://supabase.com)
+   - Sign up/Login and create a new project
+   - Wait for the project to be ready
+
+2. **Get Your Credentials**:
+   - Go to Settings → API in your Supabase dashboard
+   - Copy the "Project URL" and "anon public" key
+
+3. **Configure Environment Variables**:
+   - Create a `.env` file in your project root:
+     ```
+     SUPABASE_URL=your_project_url_here
+     SUPABASE_KEY=your_anon_key_here
+     ```
+
+4. **For Streamlit Cloud Deployment**:
+   - Add these secrets in your Streamlit Cloud dashboard:
+     ```
+     [supabase]
+     url = "your_project_url_here"
+     key = "your_anon_key_here"
+     ```
+
+5. **Create the Database Table**:
+   - Run the SQL script in your Supabase SQL editor (see `config.py` for the full script)
+
+### Testing the Connection
+
+Run the test script to verify your Supabase setup:
+
+```bash
+python test_supabase.py
+```
+
+### Migrating Existing Data
+
+If you have existing data in `data/matches.csv`, you can migrate it to Supabase:
+
+```bash
+python migrate_to_supabase.py
+```
+
+This will:
+- Create a backup of your existing CSV file
+- Migrate all your match data to Supabase
+- Preserve your original data as a backup
+
 ## 🛠️ Installation
 
 1. **Clone the repository**:
@@ -198,11 +258,28 @@ The Interactive Dashboards page provides advanced tools for player comparison an
 3. **Get a Gemini API Key** (for image extraction feature):
 
    - Go to https://makersuite.google.com/app/apikey
+   
+4. **Set up Supabase** (for cloud data storage):
+
+   - Go to [supabase.com](https://supabase.com) and create a new project
+   - Get your project URL and anon key from Settings → API
+   - Create a `.env` file in the project root:
+     ```
+     SUPABASE_URL=your_project_url_here
+     SUPABASE_KEY=your_anon_key_here
+     ```
+   - Run the SQL script in your Supabase SQL editor (see `config.py` for the full script)
    - Sign in with your Google account
    - Create a new API key
    - Copy the key for use in the application
 
-4. **Run the application**:
+4. **Test Supabase connection** (optional):
+
+   ```bash
+   python test_supabase.py
+   ```
+
+5. **Run the application**:
 
    ```bash
    streamlit run app.py

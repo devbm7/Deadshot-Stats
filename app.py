@@ -5,10 +5,13 @@ from datetime import datetime, timedelta
 import sys
 import os
 from PIL import Image
+from dotenv import load_dotenv
+load_dotenv()
 
 # Add utils to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from config import show_supabase_status
 from utils.data_processing import (
     load_match_data, save_match_data, get_unique_players, get_unique_weapons,
     get_unique_maps, get_unique_game_modes, get_next_match_id, validate_match_data,
@@ -83,6 +86,7 @@ if 'match_data' not in st.session_state:
 
 # Sidebar navigation
 st.sidebar.title("🎯 Deadshot Stats")
+
 page = st.sidebar.selectbox(
     "Navigation",
     ["🏠 Dashboard", "📊 Player Analysis", "👥 Team Analysis", "📈 Match History", 

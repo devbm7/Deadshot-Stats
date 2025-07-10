@@ -2,9 +2,20 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import os
+import streamlit as st
 
 def load_match_data():
-    """Load match data from CSV file"""
+    """Load match data from Supabase or CSV file as fallback"""
+    try:
+        # Try to load from Supabase first
+        from utils.supabase_client import load_match_data_from_supabase
+        df = load_match_data_from_supabase()
+        if not df.empty:
+            return df
+    except Exception as e:
+        st.warning(f"Could not load from Supabase: {str(e)}. Falling back to local CSV.")
+    
+    # Fallback to CSV file
     csv_path = "data/matches.csv"
     if os.path.exists(csv_path):
         df = pd.read_csv(csv_path)
@@ -19,7 +30,19 @@ def load_match_data():
         ])
 
 def save_match_data(df):
-    """Save match data to CSV file"""
+    """Save match data to Supabase and CSV file as backup"""
+    try:
+        # Try to save to Supabase first
+        from utils.supabase_client import save_match_data_to_supabase
+        if save_match_data_to_supabase(df):
+            # Also save to CSV as backup
+            os.makedirs("data", exist_ok=True)
+            df.to_csv("data/matches.csv", index=False)
+            return
+    except Exception as e:
+        st.warning(f"Could not save to Supabase: {str(e)}. Saving to local CSV only.")
+    
+    # Fallback to CSV file only
     os.makedirs("data", exist_ok=True)
     df.to_csv("data/matches.csv", index=False)
 
@@ -40,10 +63,17 @@ def get_unique_game_modes(df):
     return sorted(df['game_mode'].unique()) if not df.empty else []
 
 def get_next_match_id(df):
-    """Get next available match ID"""
-    if df.empty:
-        return 1
-    return df['match_id'].max() + 1
+    """Get next available match ID from Supabase or local data"""
+    try:
+        # Try to get from Supabase first
+        from utils.supabase_client import get_next_match_id_from_supabase
+        return get_next_match_id_from_supabase()
+    except Exception as e:
+        st.warning(f"Could not get next match ID from Supabase: {str(e)}. Using local data.")
+        # Fallback to local data
+        if df.empty:
+            return 1
+        return df['match_id'].max() + 1
 
 def validate_match_data(match_data):
     """Validate match data before saving"""
@@ -72,7 +102,39 @@ def validate_match_data(match_data):
     return errors
 
 def add_match_to_dataframe(df, match_data):
-    """Add new match data to existing dataframe"""
+    """Add new match data to existing dataframe and Supabase"""
+    try:
+        # Try to add to Supabase first
+        from utils.supabase_client import add_match_to_supabase
+        if add_match_to_supabase(match_data):
+            # Also add to local dataframe
+            new_rows = []
+            
+            for player_data in match_data:
+                row = {
+                    'match_id': player_data['match_id'],
+                    'datetime': player_data['datetime'],
+                    'game_mode': player_data['game_mode'],
+                    'map_name': player_data['map_name'],
+                    'team': player_data.get('team'),
+                    'player_name': player_data['player_name'],
+                    'kills': int(player_data['kills']),
+                    'deaths': int(player_data['deaths']),
+                    'assists': int(player_data['assists']) if player_data.get('assists') is not None else None,
+                    'score': int(player_data['score']),
+                    'weapon': player_data['weapon'],
+                    'ping': int(player_data['ping']) if player_data.get('ping') else None,
+                    'coins': int(player_data['coins']) if player_data.get('coins') else None,
+                    'match_length': int(player_data['match_length']) if player_data.get('match_length') else None
+                }
+                new_rows.append(row)
+            
+            new_df = pd.DataFrame(new_rows)
+            return pd.concat([df, new_df], ignore_index=True)
+    except Exception as e:
+        st.warning(f"Could not add to Supabase: {str(e)}. Adding to local data only.")
+    
+    # Fallback to local dataframe only
     new_rows = []
     
     for player_data in match_data:

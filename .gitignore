@@ -1,2 +1,6 @@
 utils/__pycache__
 Plan.md
+.env
+secrets.toml
+__pycache__
+.streamlit
