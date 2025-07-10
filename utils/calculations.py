@@ -765,9 +765,15 @@ def get_achievement_badges(df):
     return achievements
 
 def get_gaming_session_analysis(df):
-    """Analyze performance patterns over time and gaming sessions"""
-    if df.empty:
+    """Analyze gaming sessions based on datetime column"""
+    if df.empty or 'datetime' not in df.columns:
         return {}
+    # Robustly convert to datetime, force UTC, coerce errors
+    df['datetime'] = pd.to_datetime(df['datetime'], utc=True)
+    # Drop rows where datetime could not be parsed
+    df = df.dropna(subset=['datetime'])
+    # Convert to tz-naive for downstream compatibility
+    df['datetime'] = df['datetime'].dt.tz_localize(None)
     
     # Group by date and analyze daily patterns
     df['date'] = df['datetime'].dt.date
