@@ -207,7 +207,7 @@ def create_weapon_map_analysis(df):
     
     return fig
 
-def create_kd_leaderboard_chart(df, top_n=10):
+def create_kd_leaderboard_chart(df, top_n=5):
     """Create K/D ratio leaderboard chart"""
     if df.empty:
         return go.Figure()

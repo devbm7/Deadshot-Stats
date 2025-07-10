@@ -188,8 +188,17 @@ def filter_data_by_date_range(df, start_date, end_date):
     """Filter data by date range"""
     if df.empty:
         return df
-    
-    mask = (df['datetime'] >= start_date) & (df['datetime'] <= end_date)
+    # Normalize all datetimes to tz-naive for comparison
+    datetimes = pd.to_datetime(df['datetime'], errors='coerce')
+    if hasattr(datetimes.dt, 'tz_localize'):
+        if datetimes.dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in datetimes if pd.notnull(x)):
+            datetimes = datetimes.dt.tz_localize(None)
+    # Also ensure start_date and end_date are tz-naive
+    if hasattr(start_date, 'tzinfo') and start_date.tzinfo is not None:
+        start_date = start_date.tz_localize(None) if hasattr(start_date, 'tz_localize') else start_date.replace(tzinfo=None)
+    if hasattr(end_date, 'tzinfo') and end_date.tzinfo is not None:
+        end_date = end_date.tz_localize(None) if hasattr(end_date, 'tz_localize') else end_date.replace(tzinfo=None)
+    mask = (datetimes >= start_date) & (datetimes <= end_date)
     return df[mask]
 
 def filter_data_by_players(df, players):

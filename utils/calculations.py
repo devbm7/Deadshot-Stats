@@ -28,6 +28,12 @@ def get_player_evolution_timeline(df, player_name):
         'match_length': 'first'
     }).reset_index()
     
+    # Normalize all datetimes to tz-naive for sorting
+    match_stats['datetime'] = pd.to_datetime(match_stats['datetime'], errors='coerce')
+    if hasattr(match_stats['datetime'].dt, 'tz_localize'):
+        if match_stats['datetime'].dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in match_stats['datetime'] if pd.notnull(x)):
+            match_stats['datetime'] = match_stats['datetime'].dt.tz_localize(None)
+    
     # Calculate per-minute metrics
     match_stats['kd_ratio'] = match_stats.apply(
         lambda row: row['kills'] / row['deaths'] if row['deaths'] > 0 else row['kills'], axis=1

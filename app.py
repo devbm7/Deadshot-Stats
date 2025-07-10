@@ -461,6 +461,11 @@ elif page == "📈 Match History":
         }).reset_index()
         
         recent_matches.columns = ['Match ID', 'Date', 'Game Mode', 'Map', 'Players', 'Total Kills', 'Total Score']
+        # Normalize 'Date' to tz-naive before sorting
+        recent_matches['Date'] = pd.to_datetime(recent_matches['Date'], errors='coerce')
+        if hasattr(recent_matches['Date'].dt, 'tz_localize'):
+            if recent_matches['Date'].dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in recent_matches['Date'] if pd.notnull(x)):
+                recent_matches['Date'] = recent_matches['Date'].dt.tz_localize(None)
         recent_matches = recent_matches.sort_values('Date', ascending=False).head(10)
         
         st.dataframe(recent_matches, use_container_width=True)
