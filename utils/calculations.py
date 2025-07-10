@@ -395,10 +395,14 @@ def get_recent_activity(df, days=7):
     """Get recent activity summary"""
     if df.empty:
         return {}
-    
-    recent_date = df['datetime'].max() - pd.Timedelta(days=days)
-    recent_data = df[df['datetime'] >= recent_date]
-    
+    # Normalize all datetimes to tz-naive for comparison (robust to mixed tz-aware/tz-naive)
+    datetimes = pd.to_datetime(df['datetime'], errors='coerce')
+    if hasattr(datetimes.dt, 'tz_localize'):
+        # Remove timezone if any values are tz-aware
+        if datetimes.dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in datetimes if pd.notnull(x)):
+            datetimes = datetimes.dt.tz_localize(None)
+    recent_date = datetimes.max() - pd.Timedelta(days=days)
+    recent_data = df[datetimes >= recent_date]
     return {
         'recent_matches': len(recent_data['match_id'].unique()),
         'recent_players': len(recent_data['player_name'].unique()),

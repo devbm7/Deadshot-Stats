@@ -11,6 +11,8 @@ def load_match_data():
         from utils.supabase_client import load_match_data_from_supabase
         df = load_match_data_from_supabase()
         if not df.empty:
+            # Robustly parse all datetime formats
+            df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
             return df
     except Exception as e:
         st.warning(f"Could not load from Supabase: {str(e)}. Falling back to local CSV.")
@@ -19,7 +21,8 @@ def load_match_data():
     csv_path = "data/matches.csv"
     if os.path.exists(csv_path):
         df = pd.read_csv(csv_path)
-        df['datetime'] = pd.to_datetime(df['datetime'])
+        # Robustly parse all datetime formats
+        df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
         return df
     else:
         # Return empty DataFrame with correct structure
@@ -51,12 +54,34 @@ def get_unique_players(df):
     return sorted(df['player_name'].unique()) if not df.empty else []
 
 def get_unique_weapons(df):
-    """Get list of unique weapons"""
-    return sorted(df['weapon'].unique()) if not df.empty else []
+    """Get list of unique weapons, always including all available weapons from Images/Guns folder"""
+    # Weapons from data
+    data_weapons = set(df['weapon'].unique()) if not df.empty else set()
+    # Weapons from images
+    guns_dir = os.path.join("data", "Images", "Guns")
+    image_weapons = set()
+    if os.path.exists(guns_dir):
+        for fname in os.listdir(guns_dir):
+            if fname.lower().endswith('.png'):
+                image_weapons.add(os.path.splitext(fname)[0])
+    # Union and sort
+    all_weapons = sorted(data_weapons.union(image_weapons))
+    return all_weapons
 
 def get_unique_maps(df):
-    """Get list of unique maps"""
-    return sorted(df['map_name'].unique()) if not df.empty else []
+    """Get list of unique maps, always including all available maps from Images/Maps folder"""
+    # Maps from data
+    data_maps = set(df['map_name'].unique()) if not df.empty else set()
+    # Maps from images
+    maps_dir = os.path.join("data", "Images", "Maps")
+    image_maps = set()
+    if os.path.exists(maps_dir):
+        for fname in os.listdir(maps_dir):
+            if fname.lower().endswith('.png'):
+                image_maps.add(os.path.splitext(fname)[0])
+    # Union and sort
+    all_maps = sorted(data_maps.union(image_maps))
+    return all_maps
 
 def get_unique_game_modes(df):
     """Get list of unique game modes"""

@@ -1,3 +1,18 @@
-match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score,weapon,ping,coins,match_length
-1,2025-07-10 04:25:42.490797,FFA,Refinery,,DevilOHeaven,13,5,,1950,AR,50,,10
-1,2025-07-10 04:25:42.490797,FFA,Refinery,,MaXiMus22,5,13,,750,AR,50,,10
+id,match_id,datetime,game_mode,map_name,team,player_name,kills,deaths,assists,score,weapon,ping,coins,match_length,created_at
+2.0,1,2025-07-10 04:25:42.490797+00:00,FFA,Refinery,,DevilOHeaven,13,5,,1950,AR,50,,10,2025-07-10T08:05:20.914137+00:00
+3.0,1,2025-07-10 04:25:42.490797+00:00,FFA,Refinery,,MaXiMus22,5,13,,750,AR,50,,10,2025-07-10T08:05:20.914137+00:00
+,2,2025-07-10 15:12:19.901946,FFA,City,,DevilOHeaven,64,27,,10620,AR,50,,10,
+,2,2025-07-10 15:12:19.901946,FFA,City,,MaXiMus22,48,38,,7750,AR,50,,10,
+,2,2025-07-10 15:12:19.901946,FFA,City,,NeO23,38,39,,6250,SMG,50,,10,
+,2,2025-07-10 15:12:19.901946,FFA,City,,dumppp07,18,27,,2920,Shotgun,50,,10,
+,2,2025-07-10 15:12:19.901946,FFA,City,,Crazy dhit,13,50,,2420,AR,50,,10,
+,2,2025-07-10 15:17:12.921774,FFA,Factory,,DevilOHeaven,64,27,,10620,AR,50,,10,
+,2,2025-07-10 15:17:12.921774,FFA,Factory,,MaXiMus22,48,38,,7750,AR,50,,10,
+,2,2025-07-10 15:17:12.921774,FFA,Factory,,NeO23,38,39,,6250,SMG,50,,10,
+,2,2025-07-10 15:17:12.921774,FFA,Factory,,dumppp07,18,27,,2920,Shotgun,50,,10,
+,2,2025-07-10 15:17:12.921774,FFA,Factory,,Crazy dhit,13,50,,2420,AR,50,,10,
+,3,2025-07-10 15:20:58.706420,FFA,City,,DevilOHeaven,55,26,,8880,AR,50,,10,
+,3,2025-07-10 15:20:58.706420,FFA,City,,MaXiMus22,38,41,,6860,AR,50,,10,
+,3,2025-07-10 15:20:58.706420,FFA,City,,dumppp07,31,23,,4790,Sniper,50,,10,
+,3,2025-07-10 15:20:58.706420,FFA,City,,NeO23,26,40,,4220,AR,50,,10,
+,3,2025-07-10 15:20:58.706420,FFA,City,,Crazy dhit,20,40,,3120,AR,50,,10,

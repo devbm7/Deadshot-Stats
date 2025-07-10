@@ -496,7 +496,7 @@ elif page == "🎮 Data Input":
             if uploaded_file is not None:
                 # Display the uploaded image
                 image = Image.open(uploaded_file)
-                st.image(image, caption="Uploaded Screenshot", use_column_width=True)
+                st.image(image, caption="Uploaded Screenshot", use_container_width=True)
                 
                 # Extract data button
                 if st.button("🔍 Extract Data from Image", type="primary"):

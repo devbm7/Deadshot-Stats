@@ -67,34 +67,51 @@ def save_match_data_to_supabase(df: pd.DataFrame) -> bool:
     try:
         supabase = get_supabase_client()
         if not supabase:
+            st.error("Supabase client not initialized.")
             return False
         
         # Convert DataFrame to list of dictionaries
         records = df.to_dict('records')
-        
+        # Ensure all datetimes are tz-naive and ISO strings
+        for rec in records:
+            if 'datetime' in rec and pd.notnull(rec['datetime']):
+                dt = pd.to_datetime(rec['datetime'], utc=False)
+                if hasattr(dt, 'tz_localize') and dt.tzinfo is not None:
+                    dt = dt.tz_localize(None)
+                rec['datetime'] = dt.strftime('%Y-%m-%dT%H:%M:%S')
         # Insert all records
-        response = supabase.table('matches').insert(records).execute()
-        
+        try:
+            response = supabase.table('matches').insert(records).execute()
+        except Exception as e:
+            st.error(f"Supabase insert error: {e}\nData: {records}")
+            return False
         if response.data:
             return True
         else:
+            st.error(f"Supabase insert failed. Response: {response}")
             return False
-    except Exception:
+    except Exception as e:
+        st.error(f"Supabase save_match_data_to_supabase error: {e}")
         return False
+
 
 def add_match_to_supabase(match_data: List[Dict]) -> bool:
     """Add new match data to Supabase table"""
     try:
         supabase = get_supabase_client()
         if not supabase:
+            st.error("Supabase client not initialized.")
             return False
         
         # Prepare data for insertion
         records = []
         for player_data in match_data:
+            dt = pd.to_datetime(player_data['datetime'], utc=False)
+            if hasattr(dt, 'tz_localize') and dt.tzinfo is not None:
+                dt = dt.tz_localize(None)
             record = {
                 'match_id': player_data['match_id'],
-                'datetime': player_data['datetime'],
+                'datetime': dt.strftime('%Y-%m-%dT%H:%M:%S'),
                 'game_mode': player_data['game_mode'],
                 'map_name': player_data['map_name'],
                 'team': player_data.get('team'),
@@ -109,15 +126,19 @@ def add_match_to_supabase(match_data: List[Dict]) -> bool:
                 'match_length': int(player_data['match_length']) if player_data.get('match_length') else None
             }
             records.append(record)
-        
         # Insert records
-        response = supabase.table('matches').insert(records).execute()
-        
+        try:
+            response = supabase.table('matches').insert(records).execute()
+        except Exception as e:
+            st.error(f"Supabase insert error: {e}\nData: {records}")
+            return False
         if response.data:
             return True
         else:
+            st.error(f"Supabase insert failed. Response: {response}")
             return False
-    except Exception:
+    except Exception as e:
+        st.error(f"Supabase add_match_to_supabase error: {e}")
         return False
 
 def get_next_match_id_from_supabase() -> int:
