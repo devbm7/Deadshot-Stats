@@ -5,8 +5,14 @@ from datetime import datetime, timedelta
 import sys
 import os
 from PIL import Image
-from dotenv import load_dotenv
-load_dotenv()
+
+# Only import dotenv for local development
+if not st.secrets:
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+    except ImportError:
+        pass
 
 # Add utils to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
