@@ -255,23 +255,24 @@ This will:
    ```bash
    pip install -r requirements.txt
    ```
-3. **Get a Gemini API Key** (for image extraction feature):
+3. **Configure API Keys**:
 
+   **For Gemini API (image extraction)**:
    - Go to https://makersuite.google.com/app/apikey
+   - Copy `env.example` to `.env` and add your Gemini API key
    
-4. **Set up Supabase** (for cloud data storage):
-
+   **For Supabase (cloud storage)**:
    - Go to [supabase.com](https://supabase.com) and create a new project
    - Get your project URL and anon key from Settings → API
-   - Create a `.env` file in the project root:
+   - Add to your `.env` file:
      ```
      SUPABASE_URL=your_project_url_here
      SUPABASE_KEY=your_anon_key_here
      ```
+   
+4. **Set up Supabase** (for cloud data storage):
+
    - Run the SQL script in your Supabase SQL editor (see `config.py` for the full script)
-   - Sign in with your Google account
-   - Create a new API key
-   - Copy the key for use in the application
 
 4. **Test Supabase connection** (optional):
 
@@ -290,9 +291,20 @@ This will:
 
 The image extraction feature requires a Google Gemini API key:
 
+#### For Local Development:
 1. **Get API Key**: Visit https://makersuite.google.com/app/apikey
-2. **Enter in App**: Paste your API key in the "Gemini API Key" field
-3. **Test**: Upload a screenshot to test the extraction feature
+2. **Create .env file**: Copy `env.example` to `.env` and add your API key:
+   ```
+   GEMINI_API_KEY=your_gemini_api_key_here
+   ```
+
+#### For Streamlit Cloud Deployment:
+1. **Get API Key**: Visit https://makersuite.google.com/app/apikey
+2. **Add to Secrets**: In your Streamlit Cloud dashboard, add:
+   ```
+   [gemini]
+   api_key = "your_gemini_api_key_here"
+   ```
 
 > **Note**: The API key is only used for image analysis and is not stored permanently.
 
@@ -386,7 +398,9 @@ The system supports both existing players and custom player names:
 #### 📷 Image Upload (AI-Powered)
 1. Navigate to the **"🎮 Data Input"** page
 2. Select the **"📷 Image Upload"** tab
-3. Enter your **Gemini API Key** (get one from https://makersuite.google.com/app/apikey)
+3. **Configure API Key** (if not already done):
+   - For local development: Add to `.env` file
+   - For cloud deployment: Add to Streamlit secrets
 4. Upload a screenshot of the match results
 5. Click **"🔍 Extract Data from Image"** to automatically extract data using AI
 6. Review and edit the extracted data:

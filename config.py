@@ -13,6 +13,106 @@ SUPABASE_CONFIG = {
     "key": os.getenv("SUPABASE_KEY"),
 }
 
+# Gemini API Configuration
+def get_gemini_api_key():
+    """
+    Get Gemini API key from environment variables or Streamlit secrets.
+    Priority: Streamlit secrets > Environment variables
+    """
+    # Try to get from Streamlit secrets first
+    if st.secrets:
+        try:
+            secret_key = st.secrets.get("gemini", {}).get("api_key")
+            if secret_key:
+                return secret_key
+        except Exception as e:
+            pass
+    
+    # Fall back to environment variable
+    env_key = os.getenv("GEMINI_API_KEY")
+    if env_key:
+        return env_key
+    
+    return None
+
+def check_gemini_config():
+    """Check if Gemini API is properly configured"""
+    api_key = get_gemini_api_key()
+    return api_key is not None and api_key.strip() != ""
+
+def get_gemini_instructions():
+    """Return instructions for setting up Gemini API"""
+    return """
+    ## Gemini API Setup Instructions
+    
+    To use AI-powered image extraction, follow these steps:
+    
+    ### 1. Get a Gemini API Key
+    1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+    2. Sign in with your Google account
+    3. Create a new API key
+    4. Copy the API key
+    
+    ### 2. Set Environment Variables (Local Development)
+    Create a `.env` file in your project root with:
+    ```
+    GEMINI_API_KEY=your_gemini_api_key_here
+    ```
+    
+    ### 3. For Streamlit Cloud Deployment
+    Add this secret in your Streamlit Cloud dashboard:
+    - Go to your app settings
+    - Add secrets in the format:
+    ```
+    [gemini]
+    api_key = "your_gemini_api_key_here"
+    ```
+    
+    ### 4. Usage
+    Once configured, you can upload screenshots and the AI will automatically extract match data.
+    """
+
+def show_gemini_status():
+    """Show Gemini API connection status"""
+    if check_gemini_config():
+        st.success("✅ Gemini API is configured and ready to use!")
+        return True
+    else:
+        st.error("❌ Gemini API is not configured")
+        
+        # Provide more specific debugging information
+        st.info("**Debugging Information:**")
+        
+        # Check if secrets are available
+        if st.secrets:
+            st.write("✅ Streamlit secrets are available")
+            try:
+                gemini_secret = st.secrets.get("gemini", {})
+                if gemini_secret:
+                    st.write("✅ Gemini secret section found")
+                    if gemini_secret.get("api_key"):
+                        st.write("✅ API key found in secrets")
+                    else:
+                        st.write("❌ No API key in secrets")
+                else:
+                    st.write("❌ No Gemini secret section found")
+            except Exception as e:
+                st.write(f"❌ Error reading secrets: {e}")
+        else:
+            st.write("❌ No Streamlit secrets available")
+        
+        # Check environment variables
+        env_key = os.getenv("GEMINI_API_KEY")
+        if env_key:
+            st.write("✅ GEMINI_API_KEY found in environment")
+        else:
+            st.write("❌ GEMINI_API_KEY not found in environment")
+        
+        st.info("Please set up your Gemini API key to enable AI-powered image extraction.")
+        with st.expander("📋 Gemini API Setup Instructions"):
+            st.markdown(get_gemini_instructions())
+        return False
+
 def check_supabase_config():
     """Check if Supabase is properly configured"""
     if not SUPABASE_CONFIG["url"] or not SUPABASE_CONFIG["key"]:

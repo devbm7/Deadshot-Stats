@@ -6,18 +6,17 @@ import sys
 import os
 from PIL import Image
 
-# Only import dotenv for local development
-if not st.secrets:
-    try:
-        from dotenv import load_dotenv
-        load_dotenv()
-    except ImportError:
-        pass
+# Load environment variables from .env file for local development
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # Add utils to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from config import show_supabase_status
+from config import show_supabase_status, get_gemini_api_key, show_gemini_status
 from utils.data_processing import (
     load_match_data, save_match_data, get_unique_players, get_unique_weapons,
     get_unique_maps, get_unique_game_modes, get_next_match_id, validate_match_data,
@@ -483,13 +482,11 @@ elif page == "🎮 Data Input":
         st.subheader("📷 Upload Screenshot")
         st.write("Upload a screenshot of the match results to automatically extract data using AI.")
         
-        # API Key input
-        api_key = st.text_input("Gemini API Key", type="password", 
-                               help="Enter your Google Gemini API key. Get one from https://makersuite.google.com/app/apikey")
+        # Check Gemini API configuration
+        api_key = get_gemini_api_key()
         
         if not api_key:
-            st.warning("Please enter your Gemini API key to use image extraction.")
-            st.info("💡 **How to get an API key:**\n1. Go to https://makersuite.google.com/app/apikey\n2. Sign in with your Google account\n3. Create a new API key\n4. Copy and paste it here")
+            show_gemini_status()
         else:
             # File upload
             uploaded_file = st.file_uploader(
