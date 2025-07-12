@@ -185,19 +185,26 @@ def add_match_to_dataframe(df, match_data):
     return pd.concat([df, new_df], ignore_index=True)
 
 def filter_data_by_date_range(df, start_date, end_date):
-    """Filter data by date range"""
+    """Filter data by date range (robust to timezone-aware/naive)"""
     if df.empty:
         return df
     # Normalize all datetimes to tz-naive for comparison
     datetimes = pd.to_datetime(df['datetime'], errors='coerce')
+    # Convert to tz-naive if needed
     if hasattr(datetimes.dt, 'tz_localize'):
         if datetimes.dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in datetimes if pd.notnull(x)):
             datetimes = datetimes.dt.tz_localize(None)
     # Also ensure start_date and end_date are tz-naive
-    if hasattr(start_date, 'tzinfo') and start_date.tzinfo is not None:
-        start_date = start_date.tz_localize(None) if hasattr(start_date, 'tz_localize') else start_date.replace(tzinfo=None)
-    if hasattr(end_date, 'tzinfo') and end_date.tzinfo is not None:
-        end_date = end_date.tz_localize(None) if hasattr(end_date, 'tz_localize') else end_date.replace(tzinfo=None)
+    if getattr(start_date, 'tzinfo', None) is not None:
+        if hasattr(start_date, 'tz_localize'):
+            start_date = start_date.tz_localize(None)
+        else:
+            start_date = start_date.replace(tzinfo=None)
+    if getattr(end_date, 'tzinfo', None) is not None:
+        if hasattr(end_date, 'tz_localize'):
+            end_date = end_date.tz_localize(None)
+        else:
+            end_date = end_date.replace(tzinfo=None)
     mask = (datetimes >= start_date) & (datetimes <= end_date)
     return df[mask]
 

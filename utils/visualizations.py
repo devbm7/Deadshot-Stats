@@ -516,48 +516,413 @@ def create_player_comparison_radar(df, players):
     return fig
 
 def create_match_timeline(df):
-    """Create match timeline chart"""
+    """Create an improved match timeline chart with multiple metrics and trend analysis"""
     if df.empty:
         return go.Figure()
     
-    match_summaries = df.groupby('match_id').agg({
+    # Group by match and calculate comprehensive stats
+    agg_dict = {
         'datetime': 'first',
         'game_mode': 'first',
         'map_name': 'first',
         'kills': 'sum',
         'deaths': 'sum',
         'score': 'sum',
-        'match_length': 'first' # Add match_length here
-    }).reset_index()
+        'match_length': 'first',
+        'player_name': 'nunique'  # Number of players in match
+    }
     
+    # Add assists if the column exists
+    if 'assists' in df.columns:
+        agg_dict['assists'] = 'sum'
+    
+    match_summaries = df.groupby('match_id').agg(agg_dict).reset_index()
+    
+    # Calculate per-minute metrics
     match_summaries['kills_per_minute'] = match_summaries['kills'] / match_summaries['match_length']
     match_summaries['deaths_per_minute'] = match_summaries['deaths'] / match_summaries['match_length']
     match_summaries['score_per_minute'] = match_summaries['score'] / match_summaries['match_length']
-    
-    fig = go.Figure(data=[
-        go.Scatter(
-            x=match_summaries['datetime'],
-            y=match_summaries['kills_per_minute'],
-            mode='markers',
-            marker=dict(
-                size=match_summaries['score_per_minute'] * 10, # Scale size by score per minute
-                color=match_summaries['deaths_per_minute'],
-                colorscale='Viridis',
-                showscale=True,
-                colorbar=dict(title='Deaths/Min')
-            ),
-            text=[f"Match {row['match_id']}<br>{row['game_mode']} - {row['map_name']}<br>Kills: {row['kills']}<br>Score: {row['score']}" 
-                  for _, row in match_summaries.iterrows()],
-            hovertemplate='%{text}<extra></extra>'
-        )
-    ])
-    
-    fig.update_layout(
-        title='Match Timeline (Per-Minute)',
-        xaxis_title='Date',
-        yaxis_title='Kills/Deaths/Score/Kills/Min',
-        height=400
+    match_summaries['kd_ratio'] = match_summaries.apply(
+        lambda row: row['kills'] / row['deaths'] if row['deaths'] > 0 else row['kills'], axis=1
     )
+    
+    # Normalize datetime to timezone-naive for consistent sorting
+    match_summaries['datetime'] = pd.to_datetime(match_summaries['datetime'], errors='coerce')
+    if hasattr(match_summaries['datetime'].dt, 'tz_localize'):
+        if match_summaries['datetime'].dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in match_summaries['datetime'] if pd.notnull(x)):
+            match_summaries['datetime'] = match_summaries['datetime'].dt.tz_localize(None)
+    
+    # Sort by datetime for proper timeline
+    match_summaries = match_summaries.sort_values('datetime')
+    
+    # Create subplots for better organization
+    fig = go.Figure()
+    
+    # Add multiple traces for different metrics
+    # 1. Kills per minute (primary metric)
+    fig.add_trace(go.Scatter(
+        x=match_summaries['datetime'],
+        y=match_summaries['kills_per_minute'],
+        mode='lines+markers',
+        name='Kills/Min',
+        line=dict(color='#1f77b4', width=2),
+        marker=dict(size=8, color='#1f77b4'),
+        hovertemplate='<b>Match %{customdata[0]}</b><br>' +
+                     'Kills/Min: %{y:.2f}<br>' +
+                     'Mode: %{customdata[1]}<br>' +
+                     'Map: %{customdata[2]}<br>' +
+                     'Players: %{customdata[3]}<extra></extra>',
+        customdata=list(zip(match_summaries['match_id'], 
+                           match_summaries['game_mode'], 
+                           match_summaries['map_name'],
+                           match_summaries['player_name']))
+    ))
+    
+    # 2. K/D Ratio (secondary metric on right y-axis)
+    fig.add_trace(go.Scatter(
+        x=match_summaries['datetime'],
+        y=match_summaries['kd_ratio'],
+        mode='lines+markers',
+        name='K/D Ratio',
+        line=dict(color='#ff7f0e', width=2),
+        marker=dict(size=8, color='#ff7f0e'),
+        yaxis='y2',
+        hovertemplate='<b>Match %{customdata[0]}</b><br>' +
+                     'K/D Ratio: %{y:.2f}<br>' +
+                     'Mode: %{customdata[1]}<br>' +
+                     'Map: %{customdata[2]}<extra></extra>',
+        customdata=list(zip(match_summaries['match_id'], 
+                           match_summaries['game_mode'], 
+                           match_summaries['map_name']))
+    ))
+    
+    # 3. Score per minute (tertiary metric)
+    fig.add_trace(go.Scatter(
+        x=match_summaries['datetime'],
+        y=match_summaries['score_per_minute'],
+        mode='lines+markers',
+        name='Score/Min',
+        line=dict(color='#2ca02c', width=2),
+        marker=dict(size=8, color='#2ca02c'),
+        yaxis='y3',
+        hovertemplate='<b>Match %{customdata[0]}</b><br>' +
+                     'Score/Min: %{y:.1f}<br>' +
+                     'Mode: %{customdata[1]}<br>' +
+                     'Map: %{customdata[2]}<extra></extra>',
+        customdata=list(zip(match_summaries['match_id'], 
+                           match_summaries['game_mode'], 
+                           match_summaries['map_name']))
+    ))
+    
+    # Add trend lines using rolling averages
+    if len(match_summaries) > 3:
+        # Calculate rolling averages for trend lines
+        window_size = min(5, len(match_summaries) // 2)
+        
+        # Kills per minute trend
+        kills_trend = match_summaries['kills_per_minute'].rolling(window=window_size, center=True).mean()
+        fig.add_trace(go.Scatter(
+            x=match_summaries['datetime'],
+            y=kills_trend,
+            mode='lines',
+            name=f'Kills/Min Trend ({window_size}-match avg)',
+            line=dict(color='#1f77b4', width=3, dash='dash'),
+            showlegend=True
+        ))
+        
+        # K/D ratio trend
+        kd_trend = match_summaries['kd_ratio'].rolling(window=window_size, center=True).mean()
+        fig.add_trace(go.Scatter(
+            x=match_summaries['datetime'],
+            y=kd_trend,
+            mode='lines',
+            name=f'K/D Trend ({window_size}-match avg)',
+            line=dict(color='#ff7f0e', width=3, dash='dash'),
+            yaxis='y2',
+            showlegend=True
+        ))
+    
+    # Add performance zones (background coloring)
+    if len(match_summaries) > 0:
+        # Calculate performance thresholds
+        avg_kills = match_summaries['kills_per_minute'].mean()
+        avg_kd = match_summaries['kd_ratio'].mean()
+        
+        # Add performance zone annotations
+        fig.add_annotation(
+            x=match_summaries['datetime'].iloc[-1],
+            y=avg_kills * 1.2,
+            text="Above Avg",
+            showarrow=False,
+            bgcolor="rgba(0,255,0,0.3)",
+            bordercolor="green",
+            borderwidth=1
+        )
+        
+        fig.add_annotation(
+            x=match_summaries['datetime'].iloc[-1],
+            y=avg_kills * 0.8,
+            text="Below Avg",
+            showarrow=False,
+            bgcolor="rgba(255,0,0,0.3)",
+            bordercolor="red",
+            borderwidth=1
+        )
+    
+    # Update layout with multiple y-axes and better styling
+    fig.update_layout(
+        title={
+            'text': '📈 Match Performance Timeline',
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 20}
+        },
+        xaxis_title='Date',
+        yaxis_title='Kills per Minute',
+        yaxis2=dict(
+            title='K/D Ratio',
+            overlaying='y',
+            side='right',
+            range=[0, max(match_summaries['kd_ratio']) * 1.1]
+        ),
+        yaxis3=dict(
+            title='Score per Minute',
+            overlaying='y',
+            side='right',
+            position=0.95,
+            range=[0, max(match_summaries['score_per_minute']) * 1.1]
+        ),
+        height=500,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        hovermode='closest',
+        # Add grid for better readability
+        xaxis=dict(
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='lightgray'
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='lightgray'
+        )
+    )
+    
+    # Add summary statistics in the corner
+    if len(match_summaries) > 0:
+        total_matches = len(match_summaries)
+        avg_kills_per_min = match_summaries['kills_per_minute'].mean()
+        avg_kd = match_summaries['kd_ratio'].mean()
+        best_match = match_summaries.loc[match_summaries['kills_per_minute'].idxmax()]
+        
+        fig.add_annotation(
+            x=0.02,
+            y=0.98,
+            xref='paper',
+            yref='paper',
+            text=f"📊 Summary:<br>Matches: {total_matches}<br>Avg Kills/Min: {avg_kills_per_min:.2f}<br>Avg K/D: {avg_kd:.2f}",
+            showarrow=False,
+            bgcolor="rgba(255,255,255,0.8)",
+            bordercolor="black",
+            borderwidth=1,
+            align="left"
+        )
+    
+    return fig
+
+def create_detailed_match_timeline(df):
+    """Create a detailed match timeline with individual match breakdowns and performance insights"""
+    if df.empty:
+        return go.Figure()
+    
+    # Group by match and calculate comprehensive stats
+    agg_dict = {
+        'datetime': 'first',
+        'game_mode': 'first',
+        'map_name': 'first',
+        'kills': 'sum',
+        'deaths': 'sum',
+        'score': 'sum',
+        'match_length': 'first',
+        'player_name': 'nunique',
+        'weapon': lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else 'Unknown'
+    }
+    
+    # Add assists if the column exists
+    if 'assists' in df.columns:
+        agg_dict['assists'] = 'sum'
+    
+    match_summaries = df.groupby('match_id').agg(agg_dict).reset_index()
+    
+    # Calculate metrics
+    match_summaries['kills_per_minute'] = match_summaries['kills'] / match_summaries['match_length']
+    match_summaries['deaths_per_minute'] = match_summaries['deaths'] / match_summaries['match_length']
+    match_summaries['score_per_minute'] = match_summaries['score'] / match_summaries['match_length']
+    match_summaries['kd_ratio'] = match_summaries.apply(
+        lambda row: row['kills'] / row['deaths'] if row['deaths'] > 0 else row['kills'], axis=1
+    )
+    match_summaries['efficiency'] = match_summaries['score'] / (match_summaries['kills'] + match_summaries['deaths']).replace(0, 1)
+    
+    # Normalize datetime to timezone-naive for consistent sorting
+    match_summaries['datetime'] = pd.to_datetime(match_summaries['datetime'], errors='coerce')
+    if hasattr(match_summaries['datetime'].dt, 'tz_localize'):
+        if match_summaries['datetime'].dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in match_summaries['datetime'] if pd.notnull(x)):
+            match_summaries['datetime'] = match_summaries['datetime'].dt.tz_localize(None)
+    
+    # Sort by datetime
+    match_summaries = match_summaries.sort_values('datetime')
+    
+    # Create subplots for different aspects
+    fig = sp.make_subplots(
+        rows=3, cols=1,
+        subplot_titles=('Performance Metrics', 'Match Details', 'Performance Trends'),
+        specs=[[{"type": "scatter"}],
+               [{"type": "bar"}],
+               [{"type": "scatter"}]],
+        vertical_spacing=0.1,
+        row_heights=[0.4, 0.3, 0.3]
+    )
+    
+    # Subplot 1: Performance Metrics (Kills/Min, K/D Ratio, Score/Min)
+    fig.add_trace(go.Scatter(
+        x=match_summaries['datetime'],
+        y=match_summaries['kills_per_minute'],
+        mode='lines+markers',
+        name='Kills/Min',
+        line=dict(color='#1f77b4', width=2),
+        marker=dict(size=8),
+        hovertemplate='<b>Match %{customdata[0]}</b><br>Kills/Min: %{y:.2f}<br>Mode: %{customdata[1]}<br>Map: %{customdata[2]}<extra></extra>',
+        customdata=list(zip(match_summaries['match_id'], 
+                           match_summaries['game_mode'], 
+                           match_summaries['map_name']))
+    ), row=1, col=1)
+    
+    fig.add_trace(go.Scatter(
+        x=match_summaries['datetime'],
+        y=match_summaries['kd_ratio'],
+        mode='lines+markers',
+        name='K/D Ratio',
+        line=dict(color='#ff7f0e', width=2),
+        marker=dict(size=8),
+        yaxis='y2',
+        hovertemplate='<b>Match %{customdata[0]}</b><br>K/D Ratio: %{y:.2f}<br>Mode: %{customdata[1]}<br>Map: %{customdata[2]}<extra></extra>',
+        customdata=list(zip(match_summaries['match_id'], 
+                           match_summaries['game_mode'], 
+                           match_summaries['map_name']))
+    ), row=1, col=1)
+    
+    fig.add_trace(go.Scatter(
+        x=match_summaries['datetime'],
+        y=match_summaries['score_per_minute'],
+        mode='lines+markers',
+        name='Score/Min',
+        line=dict(color='#2ca02c', width=2),
+        marker=dict(size=8),
+        yaxis='y3',
+        hovertemplate='<b>Match %{customdata[0]}</b><br>Score/Min: %{y:.1f}<br>Mode: %{customdata[1]}<br>Map: %{customdata[2]}<extra></extra>',
+        customdata=list(zip(match_summaries['match_id'], 
+                           match_summaries['game_mode'], 
+                           match_summaries['map_name']))
+    ), row=1, col=1)
+    
+    # Subplot 2: Match Details (Game Mode, Map, Players)
+    # Create color mapping for game modes
+    game_modes = match_summaries['game_mode'].unique()
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    mode_colors = {mode: colors[i % len(colors)] for i, mode in enumerate(game_modes)}
+    
+    for mode in game_modes:
+        mode_data = match_summaries[match_summaries['game_mode'] == mode]
+        fig.add_trace(go.Bar(
+            x=mode_data['datetime'],
+            y=mode_data['player_name'],
+            name=f'{mode} Players',
+            marker_color=mode_colors[mode],
+            opacity=0.7,
+            hovertemplate='<b>Match %{customdata[0]}</b><br>Players: %{y}<br>Mode: %{customdata[1]}<br>Map: %{customdata[2]}<extra></extra>',
+            customdata=list(zip(mode_data['match_id'], 
+                               mode_data['game_mode'], 
+                               mode_data['map_name']))
+        ), row=2, col=1)
+    
+    # Subplot 3: Performance Trends with rolling averages
+    if len(match_summaries) > 3:
+        window_size = min(5, len(match_summaries) // 2)
+        
+        # Rolling averages
+        kills_trend = match_summaries['kills_per_minute'].rolling(window=window_size, center=True).mean()
+        kd_trend = match_summaries['kd_ratio'].rolling(window=window_size, center=True).mean()
+        
+        fig.add_trace(go.Scatter(
+            x=match_summaries['datetime'],
+            y=kills_trend,
+            mode='lines',
+            name=f'Kills/Min Trend ({window_size}-match avg)',
+            line=dict(color='#1f77b4', width=3, dash='dash')
+        ), row=3, col=1)
+        
+        fig.add_trace(go.Scatter(
+            x=match_summaries['datetime'],
+            y=kd_trend,
+            mode='lines',
+            name=f'K/D Trend ({window_size}-match avg)',
+            line=dict(color='#ff7f0e', width=3, dash='dash'),
+            yaxis='y6'
+        ), row=3, col=1)
+    
+    # Update layout
+    fig.update_layout(
+        title={
+            'text': '📊 Detailed Match Timeline Analysis',
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 20}
+        },
+        height=800,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        # Multiple y-axes for different metrics
+        yaxis=dict(title='Kills per Minute'),
+        yaxis2=dict(title='K/D Ratio', overlaying='y', side='right'),
+        yaxis3=dict(title='Score per Minute', overlaying='y', side='right', position=0.95),
+        yaxis4=dict(title='Number of Players', domain=[0.35, 0.65]),
+        yaxis5=dict(title='Kills per Minute', domain=[0, 0.25]),
+        yaxis6=dict(title='K/D Ratio', overlaying='y5', side='right', domain=[0, 0.25])
+    )
+    
+    # Add performance insights
+    if len(match_summaries) > 0:
+        best_match = match_summaries.loc[match_summaries['kills_per_minute'].idxmax()]
+        worst_match = match_summaries.loc[match_summaries['kills_per_minute'].idxmin()]
+        avg_kills = match_summaries['kills_per_minute'].mean()
+        avg_kd = match_summaries['kd_ratio'].mean()
+        
+        # Add insights as annotations
+        fig.add_annotation(
+            x=0.02,
+            y=0.98,
+            xref='paper',
+            yref='paper',
+            text=f"🏆 Best Match: {best_match['kills_per_minute']:.2f} kills/min<br>📉 Worst Match: {worst_match['kills_per_minute']:.2f} kills/min<br>📊 Avg Kills/Min: {avg_kills:.2f}<br>📊 Avg K/D: {avg_kd:.2f}",
+            showarrow=False,
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="black",
+            borderwidth=1,
+            align="left"
+        )
     
     return fig
 

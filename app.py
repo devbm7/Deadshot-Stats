@@ -34,7 +34,7 @@ from utils.calculations import (
 from utils.visualizations import (
     create_overview_cards, create_kd_leaderboard_chart, create_player_performance_trend,
     create_weapon_usage_chart, create_map_performance_chart, create_team_performance_chart,
-    create_player_comparison_radar, create_match_timeline, create_ping_impact_chart,
+    create_player_comparison_radar, create_match_timeline, create_detailed_match_timeline, create_ping_impact_chart,
     create_mode_wise_analysis, create_map_wise_analysis, create_weapon_map_analysis,
     create_player_evolution_chart, create_performance_clusters_chart, create_streak_analysis_chart,
     create_team_chemistry_heatmap, create_role_analysis_chart, create_team_formation_chart,
@@ -213,7 +213,18 @@ if page == "🏠 Dashboard":
     
     with tab4:
         st.subheader("📅 Match Timeline")
-        st.plotly_chart(create_match_timeline(df), use_container_width=True, key="match_timeline")
+        
+        # Timeline type selection
+        timeline_type = st.selectbox(
+            "Select Timeline View",
+            ["📈 Performance Timeline", "📊 Detailed Analysis"],
+            help="Performance Timeline shows key metrics over time. Detailed Analysis provides comprehensive breakdown with trends."
+        )
+        
+        if timeline_type == "📈 Performance Timeline":
+            st.plotly_chart(create_match_timeline(df), use_container_width=True, key="match_timeline")
+        else:
+            st.plotly_chart(create_detailed_match_timeline(df), use_container_width=True, key="detailed_match_timeline")
 
 
 
@@ -441,8 +452,21 @@ elif page == "📈 Match History":
     if selected_mode != "All":
         filtered_df = filter_data_by_game_mode(filtered_df, selected_mode)
     
-    # Match timeline
-    st.plotly_chart(create_match_timeline(filtered_df), use_container_width=True, key="filtered_match_timeline")
+    # Match timeline with options
+    st.subheader("📈 Match Timeline")
+    
+    # Timeline type selection for filtered data
+    filtered_timeline_type = st.selectbox(
+        "Select Timeline View",
+        ["📈 Performance Timeline", "📊 Detailed Analysis"],
+        help="Performance Timeline shows key metrics over time. Detailed Analysis provides comprehensive breakdown with trends.",
+        key="filtered_timeline_type"
+    )
+    
+    if filtered_timeline_type == "📈 Performance Timeline":
+        st.plotly_chart(create_match_timeline(filtered_df), use_container_width=True, key="filtered_match_timeline")
+    else:
+        st.plotly_chart(create_detailed_match_timeline(filtered_df), use_container_width=True, key="filtered_detailed_match_timeline")
     
     # Map performance
     st.plotly_chart(create_map_performance_chart(filtered_df), use_container_width=True, key="filtered_map_performance_chart")
@@ -450,6 +474,12 @@ elif page == "📈 Match History":
     # Recent matches table
     st.subheader("Recent Matches")
     if not filtered_df.empty:
+        # Debug: Show filtered data info
+        if st.checkbox("Show Debug Info", key="debug_recent_matches"):
+            st.write(f"Filtered DataFrame shape: {filtered_df.shape}")
+            st.write(f"Unique match IDs: {filtered_df['match_id'].nunique()}")
+            st.write(f"Date range: {filtered_df['datetime'].min()} to {filtered_df['datetime'].max()}")
+        
         recent_matches = filtered_df.groupby('match_id').agg({
             'datetime': 'first',
             'game_mode': 'first',
