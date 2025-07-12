@@ -6,13 +6,6 @@ import sys
 import os
 from PIL import Image
 
-# Load environment variables from .env file for local development
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
 # Add utils to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

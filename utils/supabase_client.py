@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 from supabase import create_client, Client
 from typing import List, Dict, Optional
@@ -7,33 +6,18 @@ from datetime import datetime
 
 # Initialize Supabase client
 def get_supabase_client() -> Client:
-    """Get Supabase client with credentials from Streamlit secrets (cloud) or .env/env vars (local)"""
+    """Get Supabase client with credentials from Streamlit secrets"""
     url = None
     key = None
 
-    # Try Streamlit secrets (for cloud)
-    try:
-        # Only use st.secrets if it exists and is not empty
-        if (
-            hasattr(st, "secrets")
-            and getattr(st, "secrets")  # not empty
-            and "supabase" in st.secrets
-            and st.secrets["supabase"].get("url")
-            and st.secrets["supabase"].get("key")
-        ):
-            url = st.secrets["supabase"]["url"]
-            key = st.secrets["supabase"]["key"]
-    except Exception:
-        pass
-
-    # Fallback to environment variables (.env) if not found in secrets
-    if not url or not key:
-        url = os.getenv("SUPABASE_URL")
-        key = os.getenv("SUPABASE_KEY")
+    # Get from Streamlit secrets
+    if st.secrets and "supabase" in st.secrets:
+        url = st.secrets["supabase"]["url"]
+        key = st.secrets["supabase"]["key"]
 
     if not url or not key:
         raise ValueError(
-            "Supabase credentials not found. Please set SUPABASE_URL and SUPABASE_KEY environment variables or configure Streamlit secrets."
+            "Supabase credentials not found. Please configure Streamlit secrets with [supabase] section containing url and key."
         )
     return create_client(url, key)
 

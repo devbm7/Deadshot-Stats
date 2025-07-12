@@ -16,15 +16,19 @@ from utils.image_processing import (
     extract_data_from_image, validate_extracted_data, 
     format_extracted_data_for_display, get_extraction_confidence
 )
+from config import get_gemini_api_key
 
 def test_image_extraction():
     """Test the image extraction functionality."""
     
     # Check if API key is provided
-    api_key = os.getenv('GEMINI_API_KEY')
+    api_key = get_gemini_api_key()
     if not api_key:
-        print("❌ Please set the GEMINI_API_KEY environment variable")
+        print("❌ Please set the Gemini API key in Streamlit secrets")
         print("You can get an API key from: https://makersuite.google.com/app/apikey")
+        print("For local development, create .streamlit/secrets.toml with:")
+        print("[gemini]")
+        print('api_key = "your_api_key_here"')
         return False
     
     # Test image path

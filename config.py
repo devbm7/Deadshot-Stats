@@ -4,35 +4,25 @@ Configuration file for Deadshot Stats App
 This file contains configuration settings and instructions for setting up Supabase integration.
 """
 
-import os
 import streamlit as st
 
 # Supabase Configuration
-SUPABASE_CONFIG = {
-    "url": os.getenv("SUPABASE_URL"),
-    "key": os.getenv("SUPABASE_KEY"),
-}
+def get_supabase_config():
+    """Get Supabase configuration from Streamlit secrets"""
+    if st.secrets and "supabase" in st.secrets:
+        return {
+            "url": st.secrets["supabase"]["url"],
+            "key": st.secrets["supabase"]["key"],
+        }
+    return {"url": None, "key": None}
 
 # Gemini API Configuration
 def get_gemini_api_key():
     """
-    Get Gemini API key from environment variables or Streamlit secrets.
-    Priority: Streamlit secrets > Environment variables
+    Get Gemini API key from Streamlit secrets.
     """
-    # Try to get from Streamlit secrets first
-    if st.secrets:
-        try:
-            secret_key = st.secrets.get("gemini", {}).get("api_key")
-            if secret_key:
-                return secret_key
-        except Exception as e:
-            pass
-    
-    # Fall back to environment variable
-    env_key = os.getenv("GEMINI_API_KEY")
-    if env_key:
-        return env_key
-    
+    if st.secrets and "gemini" in st.secrets:
+        return st.secrets["gemini"]["api_key"]
     return None
 
 def check_gemini_config():
@@ -53,16 +43,17 @@ def get_gemini_instructions():
     3. Create a new API key
     4. Copy the API key
     
-    ### 2. Set Environment Variables (Local Development)
-    Create a `.env` file in your project root with:
-    ```
-    GEMINI_API_KEY=your_gemini_api_key_here
-    ```
-    
-    ### 3. For Streamlit Cloud Deployment
+    ### 2. For Streamlit Cloud Deployment
     Add this secret in your Streamlit Cloud dashboard:
     - Go to your app settings
     - Add secrets in the format:
+    ```
+    [gemini]
+    api_key = "your_gemini_api_key_here"
+    ```
+    
+    ### 3. For Local Development
+    Create a `.streamlit/secrets.toml` file in your project root with:
     ```
     [gemini]
     api_key = "your_gemini_api_key_here"
@@ -101,13 +92,6 @@ def show_gemini_status():
         else:
             st.write("❌ No Streamlit secrets available")
         
-        # Check environment variables
-        env_key = os.getenv("GEMINI_API_KEY")
-        if env_key:
-            st.write("✅ GEMINI_API_KEY found in environment")
-        else:
-            st.write("❌ GEMINI_API_KEY not found in environment")
-        
         st.info("Please set up your Gemini API key to enable AI-powered image extraction.")
         with st.expander("📋 Gemini API Setup Instructions"):
             st.markdown(get_gemini_instructions())
@@ -115,7 +99,8 @@ def show_gemini_status():
 
 def check_supabase_config():
     """Check if Supabase is properly configured"""
-    if not SUPABASE_CONFIG["url"] or not SUPABASE_CONFIG["key"]:
+    config = get_supabase_config()
+    if not config["url"] or not config["key"]:
         return False
     return True
 
@@ -135,17 +120,18 @@ def get_supabase_instructions():
     1. Go to Settings → API in your Supabase dashboard
     2. Copy the "Project URL" and "anon public" key
     
-    ### 3. Set Environment Variables
-    Create a `.env` file in your project root with:
-    ```
-    SUPABASE_URL=your_project_url_here
-    SUPABASE_KEY=your_anon_key_here
-    ```
-    
-    ### 4. For Streamlit Cloud Deployment
+    ### 3. For Streamlit Cloud Deployment
     Add these secrets in your Streamlit Cloud dashboard:
     - Go to your app settings
     - Add secrets in the format:
+    ```
+    [supabase]
+    url = "your_project_url_here"
+    key = "your_anon_key_here"
+    ```
+    
+    ### 4. For Local Development
+    Create a `.streamlit/secrets.toml` file in your project root with:
     ```
     [supabase]
     url = "your_project_url_here"
