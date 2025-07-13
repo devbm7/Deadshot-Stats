@@ -596,25 +596,23 @@ elif page == "🎮 Data Input":
                 # Player data review
                 st.write("**Player Data:**")
                 
-                # Initialize player data from extracted data
+                # Initialize player data from extracted data (only once)
                 if 'extracted_player_data' not in st.session_state:
                     st.session_state.extracted_player_data = []
-                
-                # Clear existing data and populate with extracted data
-                st.session_state.extracted_player_data = []
-                for player in extracted_data.get("players", []):
-                    st.session_state.extracted_player_data.append({
-                        'player_name': player.get('player_name', ''),
-                        'original_name': player.get('player_name', ''),  # Store original name for reference
-                        'kills': player.get('kills', 0),
-                        'deaths': player.get('deaths', 0),
-                        'assists': player.get('assists'),
-                        'score': player.get('score', 0),
-                        'weapon': player.get('weapon', 'AR'),
-                        'ping': player.get('ping'),
-                        'coins': player.get('coins', 0),
-                        'team': player.get('team')
-                    })
+                    # Populate with extracted data only on first load
+                    for player in extracted_data.get("players", []):
+                        st.session_state.extracted_player_data.append({
+                            'player_name': player.get('player_name', ''),
+                            'original_name': player.get('player_name', ''),  # Store original name for reference
+                            'kills': player.get('kills', 0),
+                            'deaths': player.get('deaths', 0),
+                            'assists': player.get('assists'),
+                            'score': player.get('score', 0),
+                            'weapon': player.get('weapon', 'AR'),
+                            'ping': player.get('ping'),
+                            'coins': player.get('coins', 0),
+                            'team': player.get('team')
+                        })
                 
                 # Display and edit player data
                 for i, player in enumerate(st.session_state.extracted_player_data):
@@ -698,10 +696,21 @@ elif page == "🎮 Data Input":
                             player['ping'] = st.number_input(f"Ping {i+1}", min_value=0, value=player['ping'] or 50, key=f"extracted_ping_{i}")
                             player['coins'] = st.number_input(f"Coins {i+1}", min_value=0, value=player['coins'], key=f"extracted_coins_{i}")
                         
-                        # Remove player button - moved inside the expander
-                        if st.button(f"❌ Remove Player {i+1}", key=f"extracted_remove_{i}"):
-                            st.session_state.extracted_player_data.pop(i)
-                            st.rerun()
+                        # Remove player button - placed after the columns for better layout
+                        st.markdown("---")
+                        col_remove1, col_remove2, col_remove3 = st.columns([1, 1, 1])
+                        with col_remove2:
+                            if st.button(f"❌ Remove Player {i+1}", key=f"extracted_remove_{i}", type="secondary"):
+                                if 'extracted_player_data' in st.session_state and len(st.session_state.extracted_player_data) > 1:
+                                    st.session_state.extracted_player_data.pop(i)
+                                    st.rerun()
+                                else:
+                                    st.error("Cannot remove the last player. At least one player is required.")
+                
+                # Debug info (can be removed later)
+                if st.checkbox("Show Debug Info", key="extracted_debug"):
+                    st.write(f"Current players: {len(st.session_state.extracted_player_data)}")
+                    st.write(f"Player data: {st.session_state.extracted_player_data}")
                 
                 # Add new player button
                 if st.button("➕ Add Player", key="extracted_add_player"):
