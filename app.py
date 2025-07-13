@@ -698,7 +698,7 @@ elif page == "🎮 Data Input":
                             player['ping'] = st.number_input(f"Ping {i+1}", min_value=0, value=player['ping'] or 50, key=f"extracted_ping_{i}")
                             player['coins'] = st.number_input(f"Coins {i+1}", min_value=0, value=player['coins'], key=f"extracted_coins_{i}")
                         
-                        # Remove player button
+                        # Remove player button - moved inside the expander
                         if st.button(f"❌ Remove Player {i+1}", key=f"extracted_remove_{i}"):
                             st.session_state.extracted_player_data.pop(i)
                             st.rerun()
