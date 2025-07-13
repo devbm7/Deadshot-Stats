@@ -171,18 +171,18 @@ if page == "🏠 Dashboard":
                         'Deaths/Min': round(player_stats['deaths_per_minute'], 2),
                         'Assists/Min': round(player_stats['assists_per_minute'], 2),
                         'Score/Min': round(player_stats['score_per_minute'], 2),
-                        'Tags/Min': round(player_stats['tags_per_minute'], 2),
+                        'Tags/Min': round(player_stats.get('tags_per_minute', 0), 2),
                         'Total Matches': player_stats['total_matches'],
                         'Total Kills': player_stats['total_kills'],
                         'Total Assists': player_stats['total_assists'],
                         'Total Score': player_stats['total_score'],
-                        'Total Tags': player_stats['total_tags'],
+                        'Total Tags': player_stats.get('total_tags', 0),
                         'Wins': player_stats['wins'],
                         'Losses': player_stats['losses'],
                         'Total Time (min)': player_stats['total_minutes'],
                         'Best Match Kills': player_stats['best_match_kills'],
                         'Best Match Score': player_stats['best_match_score'],
-                        'Best Match Tags': player_stats['best_match_tags'],
+                        'Best Match Tags': player_stats.get('best_match_tags', 0),
                         'Favorite Weapon': player_stats['favorite_weapon']
                     })
             
@@ -270,7 +270,7 @@ elif page == "📊 Player Analysis":
                         st.write(f"• Deaths per Minute: {player_stats['deaths_per_minute']}")
                         st.write(f"• Assists per Minute: {player_stats['assists_per_minute']}")
                         st.write(f"• Score per Minute: {player_stats['score_per_minute']}")
-                        st.write(f"• Tags per Minute: {player_stats['tags_per_minute']}")
+                        st.write(f"• Tags per Minute: {player_stats.get('tags_per_minute', 0)}")
                     
                     with col2:
                         st.write("**Match Statistics:**")
@@ -278,7 +278,7 @@ elif page == "📊 Player Analysis":
                         st.write(f"• Losses: {player_stats['losses']}")
                         st.write(f"• Total Time Played: {player_stats['total_minutes']} minutes")
                         st.write(f"• Total Coins: {player_stats['total_coins']}")
-                        st.write(f"• Total Tags: {player_stats['total_tags']}")
+                        st.write(f"• Total Tags: {player_stats.get('total_tags', 0)}")
                 
                 with tab3:
                     st.subheader("🎯 Player Details")
@@ -290,7 +290,7 @@ elif page == "📊 Player Analysis":
                         st.write(f"• Best Match Kills: {player_stats['best_match_kills']}")
                         st.write(f"• Best Match Score: {player_stats['best_match_score']}")
                         st.write(f"• Best Match Assists: {player_stats['best_match_assists']}")
-                        st.write(f"• Best Match Tags: {player_stats['best_match_tags']}")
+                        st.write(f"• Best Match Tags: {player_stats.get('best_match_tags', 0)}")
                         st.write(f"• Favorite Weapon: {player_stats['favorite_weapon']}")
                     
                     with col2:
@@ -300,7 +300,7 @@ elif page == "📊 Player Analysis":
                         st.write(f"• Total Matches: {player_stats['total_matches']}")
                         st.write(f"• Total Kills: {player_stats['total_kills']}")
                         st.write(f"• Total Assists: {player_stats['total_assists']}")
-                        st.write(f"• Total Tags: {player_stats['total_tags']}")
+                        st.write(f"• Total Tags: {player_stats.get('total_tags', 0)}")
                 
                 with tab4:
                     st.subheader("📊 Player Comparison")
