@@ -171,15 +171,18 @@ if page == "🏠 Dashboard":
                         'Deaths/Min': round(player_stats['deaths_per_minute'], 2),
                         'Assists/Min': round(player_stats['assists_per_minute'], 2),
                         'Score/Min': round(player_stats['score_per_minute'], 2),
+                        'Tags/Min': round(player_stats['tags_per_minute'], 2),
                         'Total Matches': player_stats['total_matches'],
                         'Total Kills': player_stats['total_kills'],
                         'Total Assists': player_stats['total_assists'],
                         'Total Score': player_stats['total_score'],
+                        'Total Tags': player_stats['total_tags'],
                         'Wins': player_stats['wins'],
                         'Losses': player_stats['losses'],
                         'Total Time (min)': player_stats['total_minutes'],
                         'Best Match Kills': player_stats['best_match_kills'],
                         'Best Match Score': player_stats['best_match_score'],
+                        'Best Match Tags': player_stats['best_match_tags'],
                         'Favorite Weapon': player_stats['favorite_weapon']
                     })
             
@@ -267,6 +270,7 @@ elif page == "📊 Player Analysis":
                         st.write(f"• Deaths per Minute: {player_stats['deaths_per_minute']}")
                         st.write(f"• Assists per Minute: {player_stats['assists_per_minute']}")
                         st.write(f"• Score per Minute: {player_stats['score_per_minute']}")
+                        st.write(f"• Tags per Minute: {player_stats['tags_per_minute']}")
                     
                     with col2:
                         st.write("**Match Statistics:**")
@@ -274,6 +278,7 @@ elif page == "📊 Player Analysis":
                         st.write(f"• Losses: {player_stats['losses']}")
                         st.write(f"• Total Time Played: {player_stats['total_minutes']} minutes")
                         st.write(f"• Total Coins: {player_stats['total_coins']}")
+                        st.write(f"• Total Tags: {player_stats['total_tags']}")
                 
                 with tab3:
                     st.subheader("🎯 Player Details")
@@ -285,6 +290,7 @@ elif page == "📊 Player Analysis":
                         st.write(f"• Best Match Kills: {player_stats['best_match_kills']}")
                         st.write(f"• Best Match Score: {player_stats['best_match_score']}")
                         st.write(f"• Best Match Assists: {player_stats['best_match_assists']}")
+                        st.write(f"• Best Match Tags: {player_stats['best_match_tags']}")
                         st.write(f"• Favorite Weapon: {player_stats['favorite_weapon']}")
                     
                     with col2:
@@ -294,6 +300,7 @@ elif page == "📊 Player Analysis":
                         st.write(f"• Total Matches: {player_stats['total_matches']}")
                         st.write(f"• Total Kills: {player_stats['total_kills']}")
                         st.write(f"• Total Assists: {player_stats['total_assists']}")
+                        st.write(f"• Total Tags: {player_stats['total_tags']}")
                 
                 with tab4:
                     st.subheader("📊 Player Comparison")
@@ -577,9 +584,11 @@ elif page == "🎮 Data Input":
                     match_datetime = datetime.combine(match_date, match_time)
                 
                 with col2:
-                    game_mode = st.selectbox("Game Mode", ["Team", "FFA"], 
-                                           index=0 if extracted_data.get("game_mode") == "Team" else 1,
-                                           key="extracted_game_mode")
+                    game_mode = st.selectbox("Game Mode", ["Team", "FFA", "Confirm", "Team Confirm"], 
+                                   index=0 if extracted_data.get("game_mode") == "Team" else 
+                                         1 if extracted_data.get("game_mode") == "FFA" else
+                                         2 if extracted_data.get("game_mode") == "Confirm" else 3,
+                                   key="extracted_game_mode")
                 
                 with col3:
                     maps = get_unique_maps(df)
@@ -611,7 +620,8 @@ elif page == "🎮 Data Input":
                             'weapon': player.get('weapon', 'AR'),
                             'ping': player.get('ping'),
                             'coins': player.get('coins', 0),
-                            'team': player.get('team')
+                            'team': player.get('team'),
+                            'tags': player.get('tags', 0) if extracted_data.get("game_mode") in ["Confirm", "Team Confirm"] else None
                         })
                 
                 # Display and edit player data
@@ -672,7 +682,7 @@ elif page == "🎮 Data Input":
                             player['deaths'] = st.number_input(f"Deaths {i+1}", min_value=0, value=player['deaths'], key=f"extracted_deaths_{i}")
                         
                         with col2:
-                            if game_mode == "Team":
+                            if game_mode in ["Team", "Team Confirm"]:
                                 player['assists'] = st.number_input(f"Assists {i+1}", min_value=0, value=player['assists'] or 0, key=f"extracted_assists_{i}")
                                 player['team'] = st.selectbox(f"Team {i+1}", ["Team1", "Team2"], 
                                                            index=0 if player.get('team') == "Team1" else 1,
@@ -695,6 +705,12 @@ elif page == "🎮 Data Input":
                             
                             player['ping'] = st.number_input(f"Ping {i+1}", min_value=0, value=player['ping'] or 50, key=f"extracted_ping_{i}")
                             player['coins'] = st.number_input(f"Coins {i+1}", min_value=0, value=player['coins'], key=f"extracted_coins_{i}")
+                            
+                            # Add tags field for Confirm and Team Confirm modes
+                            if game_mode in ["Confirm", "Team Confirm"]:
+                                player['tags'] = st.number_input(f"Tags {i+1}", min_value=0, value=player.get('tags', 0), key=f"extracted_tags_{i}")
+                            else:
+                                player['tags'] = None
                         
                         # Remove player button - placed after the columns for better layout
                         st.markdown("---")
@@ -724,7 +740,8 @@ elif page == "🎮 Data Input":
                         'weapon': 'AR',
                         'ping': None,
                         'coins': 0,
-                        'team': None
+                        'team': None,
+                        'tags': 0
                     })
                     st.rerun()
                 
@@ -786,7 +803,7 @@ elif page == "🎮 Data Input":
             match_datetime = datetime.combine(match_date, match_time)
         
         with col2:
-            game_mode = st.selectbox("Game Mode", ["Team", "FFA"], key="manual_game_mode")
+            game_mode = st.selectbox("Game Mode", ["Team", "FFA", "Confirm", "Team Confirm"], key="manual_game_mode")
         
         with col3:
             maps = get_unique_maps(df)
@@ -814,7 +831,8 @@ elif page == "🎮 Data Input":
                 'weapon': 'AR',
                 'ping': None,
                 'coins': 0,
-                'team': None
+                'team': None,
+                'tags': 0
             })
         
         # Display and edit player data
@@ -859,7 +877,7 @@ elif page == "🎮 Data Input":
                     player['deaths'] = st.number_input(f"Deaths {i+1}", min_value=0, value=player['deaths'], key=f"manual_deaths_{i}")
                 
                 with col2:
-                    if game_mode == "Team":
+                    if game_mode in ["Team", "Team Confirm"]:
                         player['assists'] = st.number_input(f"Assists {i+1}", min_value=0, value=player['assists'], key=f"manual_assists_{i}")
                         player['team'] = st.selectbox(f"Team {i+1}", ["Team1", "Team2"], key=f"manual_team_{i}")
                     else:
@@ -877,6 +895,12 @@ elif page == "🎮 Data Input":
                     
                     player['ping'] = st.number_input(f"Ping {i+1}", min_value=0, value=player['ping'] or 50, key=f"manual_ping_{i}")
                     player['coins'] = st.number_input(f"Coins {i+1}", min_value=0, value=player['coins'], key=f"manual_coins_{i}")
+                    
+                    # Add tags field for Confirm and Team Confirm modes
+                    if game_mode in ["Confirm", "Team Confirm"]:
+                        player['tags'] = st.number_input(f"Tags {i+1}", min_value=0, value=player.get('tags', 0), key=f"manual_tags_{i}")
+                    else:
+                        player['tags'] = None
                 
                 # Remove player button
                 if st.button(f"❌ Remove Player {i+1}", key=f"manual_remove_{i}"):
@@ -1086,7 +1110,7 @@ elif page == "📋 Leaderboards":
     # Leaderboard type selection
     leaderboard_type = st.selectbox(
         "Leaderboard Type",
-        ["K/D Ratio", "Total Kills", "Avg Kills per Match", "Total Score", "Total Coins", "Total Assists", "Win Rate"]
+        ["K/D Ratio", "Total Kills", "Avg Kills per Match", "Total Score", "Total Coins", "Total Assists", "Win Rate", "Total Tags", "Avg Tags per Match"]
     )
     
     # Get leaderboard data
@@ -1097,7 +1121,9 @@ elif page == "📋 Leaderboards":
         "Total Score": "total_score",
         "Total Coins": "total_coins",
         "Total Assists": "total_assists",
-        "Win Rate": "win_rate"
+        "Win Rate": "win_rate",
+        "Total Tags": "total_tags",
+        "Avg Tags per Match": "avg_tags_per_match"
     }
     
     leaderboard_df = get_leaderboard_data(df, metric_map[leaderboard_type])
@@ -1495,12 +1521,15 @@ with st.sidebar.expander("🎮 Gaming Session Analysis"):
 with st.sidebar.expander("📋 Data Input Guide"):
     st.markdown("""
     **Match Length**: 5, 10, or 20 minutes\n
-    **Game Modes**: Team or FFA\n
-    **Team Matches**: Include assists and team assignments\n
-    **FFA Matches**: Individual performance only\n
+    **Game Modes**: 
+    • Team: Team-based with assists and team assignments
+    • FFA: Individual performance only
+    • Confirm: Tag collection mode - players drop tags when killed, winner has most tags
+    • Team Confirm: Team tag collection mode - teams compete for most tags
     **Weapons**: Track weapon usage per match\n
     **Ping**: Optional network performance\n
     **Coins**: Optional currency tracking\n
+    **Tags**: Required for Confirm/Team Confirm modes - number of tags collected
     """)
 
 with st.sidebar.expander("🔧 Technical Details"):

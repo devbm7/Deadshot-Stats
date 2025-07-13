@@ -43,10 +43,11 @@ def extract_data_from_image(image: Image.Image, api_key: str) -> Dict[str, Any]:
                     "score": number,
                     "weapon": "string",
                     "ping": number (if visible),
-                    "coins": number (if visible)
+                    "coins": number (if visible),
+                    "tags": number (if this is a Confirm or Team Confirm match)
                 }
             ],
-            "game_mode": "string (Team/FFA)",
+            "game_mode": "string (Team/FFA/Confirm/Team Confirm)",
             "map_name": "string (if visible)",
             "match_length": number (in minutes, if visible),
             "extraction_confidence": "high/medium/low"
@@ -57,6 +58,8 @@ def extract_data_from_image(image: Image.Image, api_key: str) -> Dict[str, Any]:
         - Common player names in this system include: DevilOHeaven, MaXiMus22, Heet63, Alice, Bob, Charlie, David
         - Valid weapon names: AR, SMG, Sniper, Shotgun
         - Valid map names: Refinery, Factory, Forest, Neo Tokyo, Vineyard, Snowfall
+        - Game modes: Team (team-based with assists), FFA (free-for-all), Confirm (tag collection), Team Confirm (team tag collection)
+        - Tags: In Confirm/Team Confirm modes, players collect tags from killed opponents. Look for a "Tags:" field or similar.
         - Only extract information that is clearly visible in the image
         - For missing data, use null values
         - If you can't determine game mode, default to "FFA"
@@ -134,6 +137,11 @@ def validate_extracted_data(data: Dict[str, Any]) -> List[str]:
             if field in player and player[field] is not None:
                 if not isinstance(player[field], (int, float)) or player[field] < 0:
                     errors.append(f"Player {i+1} {field} must be a non-negative number")
+        
+        # Validate tags for Confirm/Team Confirm modes
+        if "tags" in player and player["tags"] is not None:
+            if not isinstance(player["tags"], (int, float)) or player["tags"] < 0:
+                errors.append(f"Player {i+1} tags must be a non-negative number")
     
     return errors
 
@@ -183,6 +191,7 @@ def format_extracted_data_for_display(data: Dict[str, Any]) -> Dict[str, Any]:
             "weapon": player.get("weapon", "AR"),
             "ping": player.get("ping"),
             "coins": player.get("coins", 0),
+            "tags": player.get("tags"),
             "team": None  # Will be set based on game mode
         }
         formatted_data["players"].append(formatted_player)

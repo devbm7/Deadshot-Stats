@@ -124,17 +124,36 @@ def get_player_streaks(df, player_name):
         game_mode = match_data.iloc[0]['game_mode']
         
         # Determine if player won this match
-        if game_mode == 'Team':
+        if game_mode in ['Team', 'Team Confirm']:
             player_team = match_data[match_data['player_name'] == player_name]['team'].iloc[0]
-            team_score = match_data[match_data['team'] == player_team]['score'].sum()
-            other_teams = match_data[match_data['team'] != player_team]
             
-            if not other_teams.empty:
-                other_team_scores = other_teams.groupby('team')['score'].sum()
-                max_other_score = other_team_scores.max()
-                won = team_score > max_other_score
+            if game_mode == 'Team':
+                # Regular team mode - winner by team score
+                team_score = match_data[match_data['team'] == player_team]['score'].sum()
+                other_teams = match_data[match_data['team'] != player_team]
+                
+                if not other_teams.empty:
+                    other_team_scores = other_teams.groupby('team')['score'].sum()
+                    max_other_score = other_team_scores.max()
+                    won = team_score > max_other_score
+                else:
+                    won = False
             else:
-                won = False
+                # Team Confirm mode - winner by team tags
+                team_tags = match_data[match_data['team'] == player_team]['tags'].sum()
+                other_teams = match_data[match_data['team'] != player_team]
+                
+                if not other_teams.empty:
+                    other_team_tags = other_teams.groupby('team')['tags'].sum()
+                    max_other_tags = other_team_tags.max()
+                    won = team_tags > max_other_tags
+                else:
+                    won = False
+        elif game_mode == 'Confirm':
+            # Confirm mode - winner by individual tags
+            player_tags = match_data[match_data['player_name'] == player_name]['tags'].iloc[0]
+            max_tags = match_data['tags'].max()
+            won = player_tags == max_tags
         else:
             # FFA match
             player_score = match_data[match_data['player_name'] == player_name]['score'].iloc[0]
@@ -148,6 +167,21 @@ def get_player_streaks(df, player_name):
         })
     
     # Sort by datetime
+    # Parse datetime values for proper sorting
+    for result in match_results:
+        try:
+            result['datetime'] = pd.to_datetime(result['datetime'], format='mixed', errors='coerce')
+        except Exception:
+            try:
+                result['datetime'] = pd.to_datetime(result['datetime'], format='ISO8601', errors='coerce')
+            except Exception:
+                result['datetime'] = pd.to_datetime(result['datetime'], errors='coerce')
+    
+    # Normalize timezone-aware datetimes
+    for result in match_results:
+        if hasattr(result['datetime'], 'tz_localize') and result['datetime'].tz is not None:
+            result['datetime'] = result['datetime'].tz_localize(None)
+    
     match_results.sort(key=lambda x: x['datetime'])
     
     # Calculate streaks
@@ -202,21 +236,47 @@ def calculate_player_wins(df, player_name):
         match_data = df[df['match_id'] == match_id]
         game_mode = match_data.iloc[0]['game_mode']
         
-        if game_mode == 'Team':
-            # For team matches, determine winner by team score
+        if game_mode in ['Team', 'Team Confirm']:
+            # For team matches, determine winner by team score or team tags
             player_team = match_data[match_data['player_name'] == player_name]['team'].iloc[0]
-            team_score = match_data[match_data['team'] == player_team]['score'].sum()
-            other_teams = match_data[match_data['team'] != player_team]
             
-            if not other_teams.empty:
-                other_team_scores = other_teams.groupby('team')['score'].sum()
-                max_other_score = other_team_scores.max()
+            if game_mode == 'Team':
+                # Regular team mode - winner by team score
+                team_score = match_data[match_data['team'] == player_team]['score'].sum()
+                other_teams = match_data[match_data['team'] != player_team]
                 
-                if team_score > max_other_score:
-                    wins += 1
-                elif team_score < max_other_score:
-                    losses += 1
-                # If equal, it's a draw (no change to wins/losses)
+                if not other_teams.empty:
+                    other_team_scores = other_teams.groupby('team')['score'].sum()
+                    max_other_score = other_team_scores.max()
+                    
+                    if team_score > max_other_score:
+                        wins += 1
+                    elif team_score < max_other_score:
+                        losses += 1
+                    # If equal, it's a draw (no change to wins/losses)
+            else:
+                # Team Confirm mode - winner by team tags
+                team_tags = match_data[match_data['team'] == player_team]['tags'].sum()
+                other_teams = match_data[match_data['team'] != player_team]
+                
+                if not other_teams.empty:
+                    other_team_tags = other_teams.groupby('team')['tags'].sum()
+                    max_other_tags = other_team_tags.max()
+                    
+                    if team_tags > max_other_tags:
+                        wins += 1
+                    elif team_tags < max_other_tags:
+                        losses += 1
+                    # If equal, it's a draw (no change to wins/losses)
+        elif game_mode == 'Confirm':
+            # Confirm mode - winner by individual tags
+            player_tags = match_data[match_data['player_name'] == player_name]['tags'].iloc[0]
+            max_tags = match_data['tags'].max()
+            
+            if player_tags == max_tags:
+                wins += 1
+            else:
+                losses += 1
         else:
             # For FFA matches, determine winner by individual score
             player_score = match_data[match_data['player_name'] == player_name]['score'].iloc[0]
@@ -256,6 +316,7 @@ def get_player_stats(df, player_name=None):
         'total_assists': int(player_df['assists'].sum()) if 'assists' in player_df.columns and not player_df['assists'].isna().all() else 0,
         'total_score': int(player_df['score'].sum()),
         'total_coins': int(player_df['coins'].sum()) if 'coins' in player_df.columns else 0,
+        'total_tags': int(player_df['tags'].sum()) if 'tags' in player_df.columns and not player_df['tags'].isna().all() else 0,
         'total_minutes': int(total_minutes),
         'wins': wins,
         'losses': losses,
@@ -264,14 +325,17 @@ def get_player_stats(df, player_name=None):
         'avg_deaths_per_match': round(player_df.groupby('match_id')['deaths'].sum().mean(), 1),
         'avg_assists_per_match': round(player_df.groupby('match_id')['assists'].sum().mean(), 1) if 'assists' in player_df.columns and not player_df['assists'].isna().all() else 0,
         'avg_score_per_match': round(player_df.groupby('match_id')['score'].sum().mean(), 1),
+        'avg_tags_per_match': round(player_df.groupby('match_id')['tags'].sum().mean(), 1) if 'tags' in player_df.columns and not player_df['tags'].isna().all() else 0,
         'kills_per_minute': round(player_df['kills'].sum() / total_minutes, 2) if total_minutes > 0 else 0,
         'deaths_per_minute': round(player_df['deaths'].sum() / total_minutes, 2) if total_minutes > 0 else 0,
         'assists_per_minute': round(player_df['assists'].sum() / total_minutes, 2) if 'assists' in player_df.columns and not player_df['assists'].isna().all() and total_minutes > 0 else 0,
         'score_per_minute': round(player_df['score'].sum() / total_minutes, 2) if total_minutes > 0 else 0,
+        'tags_per_minute': round(player_df['tags'].sum() / total_minutes, 2) if 'tags' in player_df.columns and not player_df['tags'].isna().all() and total_minutes > 0 else 0,
         'kd_ratio': calculate_kd_ratio(player_df['kills'].sum(), player_df['deaths'].sum()),
         'best_match_kills': int(player_df.groupby('match_id')['kills'].sum().max()),
         'best_match_score': int(player_df.groupby('match_id')['score'].sum().max()),
         'best_match_assists': int(player_df.groupby('match_id')['assists'].sum().max()) if 'assists' in player_df.columns and not player_df['assists'].isna().all() else 0,
+        'best_match_tags': int(player_df.groupby('match_id')['tags'].sum().max()) if 'tags' in player_df.columns and not player_df['tags'].isna().all() else 0,
         'favorite_weapon': player_df['weapon'].mode().iloc[0] if not player_df['weapon'].mode().empty else 'Unknown',
         'avg_ping': round(player_df['ping'].mean(), 1) if 'ping' in player_df.columns and not player_df['ping'].isna().all() else None
     }
@@ -301,15 +365,30 @@ def get_team_stats(df):
             other_teams = team_df[(team_df['match_id'] == match_id) & (team_df['team'] != team)]
             
             if not other_teams.empty:
-                team_score = match_data['score'].sum()
-                other_team_scores = other_teams.groupby('team')['score'].sum()
-                max_other_score = other_team_scores.max()
+                game_mode = match_data.iloc[0]['game_mode']
                 
-                if team_score > max_other_score:
-                    team_wins += 1
-                elif team_score < max_other_score:
-                    team_losses += 1
-                # If equal, it's a draw (no change to wins/losses)
+                if game_mode == 'Team':
+                    # Regular team mode - winner by team score
+                    team_score = match_data['score'].sum()
+                    other_team_scores = other_teams.groupby('team')['score'].sum()
+                    max_other_score = other_team_scores.max()
+                    
+                    if team_score > max_other_score:
+                        team_wins += 1
+                    elif team_score < max_other_score:
+                        team_losses += 1
+                    # If equal, it's a draw (no change to wins/losses)
+                else:
+                    # Team Confirm mode - winner by team tags
+                    team_tags = match_data['tags'].sum()
+                    other_team_tags = other_teams.groupby('team')['tags'].sum()
+                    max_other_tags = other_team_tags.max()
+                    
+                    if team_tags > max_other_tags:
+                        team_wins += 1
+                    elif team_tags < max_other_tags:
+                        team_losses += 1
+                    # If equal, it's a draw (no change to wins/losses)
         
         team_stats[team] = {
             'matches': len(matches),
@@ -340,11 +419,13 @@ def get_leaderboard_data(df, metric='kd_ratio'):
                 'kd_ratio': player_stats['kd_ratio'],
                 'total_kills': player_stats['total_kills'],
                 'total_assists': player_stats['total_assists'],
+                'total_tags': player_stats['total_tags'],
                 'wins': player_stats['wins'],
                 'losses': player_stats['losses'],
                 'win_rate': player_stats['win_rate'],
                 'avg_kills_per_match': player_stats['avg_kills_per_match'],
                 'avg_assists_per_match': player_stats['avg_assists_per_match'],
+                'avg_tags_per_match': player_stats['avg_tags_per_match'],
                 'total_score': player_stats['total_score'],
                 'total_coins': player_stats['total_coins'],
                 'total_matches': player_stats['total_matches']
@@ -402,23 +483,37 @@ def get_recent_activity(df, days=7):
     if df.empty:
         return {}
     
-    # Robust datetime parsing with multiple fallbacks
+    # Create a copy to avoid modifying the original dataframe
+    df_copy = df.copy()
+    
+    # Robust datetime parsing with multiple fallbacks, always force UTC
     try:
-        datetimes = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
+        df_copy['datetime'] = pd.to_datetime(df_copy['datetime'], format='mixed', errors='coerce', utc=True)
     except Exception:
         try:
-            datetimes = pd.to_datetime(df['datetime'], format='ISO8601', errors='coerce')
+            df_copy['datetime'] = pd.to_datetime(df_copy['datetime'], format='ISO8601', errors='coerce', utc=True)
         except Exception:
-            datetimes = pd.to_datetime(df['datetime'], errors='coerce')
+            df_copy['datetime'] = pd.to_datetime(df_copy['datetime'], errors='coerce', utc=True)
     
-    # Normalize all datetimes to tz-naive for comparison (robust to mixed tz-aware/tz-naive)
-    if hasattr(datetimes.dt, 'tz_localize'):
-        # Remove timezone if any values are tz-aware
-        if datetimes.dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in datetimes if pd.notnull(x)):
-            datetimes = datetimes.dt.tz_localize(None)
+    # Remove rows where datetime parsing failed
+    df_copy = df_copy.dropna(subset=['datetime'])
     
-    recent_date = datetimes.max() - pd.Timedelta(days=days)
-    recent_data = df[datetimes >= recent_date]
+    if df_copy.empty:
+        return {
+            'recent_matches': 0,
+            'recent_players': 0,
+            'recent_kills': 0,
+            'recent_weapons': {}
+        }
+    
+    # Convert to tz-naive for downstream compatibility
+    df_copy['datetime'] = df_copy['datetime'].dt.tz_localize(None)
+    
+    # Calculate recent date based on current time, not latest match date
+    current_date = pd.Timestamp.now()
+    recent_date = current_date - pd.Timedelta(days=days)
+    recent_data = df_copy[df_copy['datetime'] >= recent_date]
+    
     return {
         'recent_matches': len(recent_data['match_id'].unique()),
         'recent_players': len(recent_data['player_name'].unique()),

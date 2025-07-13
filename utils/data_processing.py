@@ -50,7 +50,7 @@ def load_match_data():
     return pd.DataFrame(columns=[
         'match_id', 'datetime', 'game_mode', 'map_name', 'team', 
         'player_name', 'kills', 'deaths', 'assists', 'score', 
-        'weapon', 'ping', 'coins', 'match_length'
+        'weapon', 'ping', 'coins', 'match_length', 'tags'
     ])
 
 def save_match_data(df):
@@ -132,7 +132,7 @@ def validate_match_data(match_data):
                 errors.append(f"Missing required field: {field}")
         
         # Check numeric fields
-        numeric_fields = ['kills', 'deaths', 'score', 'ping', 'coins', 'match_length']
+        numeric_fields = ['kills', 'deaths', 'score', 'ping', 'coins', 'match_length', 'tags']
         for field in numeric_fields:
             if field in player_data and player_data[field] is not None:
                 try:
@@ -141,8 +141,15 @@ def validate_match_data(match_data):
                     errors.append(f"Invalid numeric value for {field}")
         
         # Check assists for team matches
-        if player_data.get('game_mode') == 'Team' and player_data.get('assists') is None:
+        if player_data.get('game_mode') in ['Team', 'Team Confirm'] and player_data.get('assists') is None:
             errors.append("Assists required for team matches")
+        
+        # Check tags for confirm modes
+        if player_data.get('game_mode') in ['Confirm', 'Team Confirm']:
+            if player_data.get('tags') is None:
+                errors.append("Tags required for Confirm and Team Confirm matches")
+            elif player_data.get('tags') < 0:
+                errors.append("Tags cannot be negative")
     
     return errors
 
@@ -170,7 +177,8 @@ def add_match_to_dataframe(df, match_data):
                     'weapon': player_data['weapon'],
                     'ping': int(player_data['ping']) if player_data.get('ping') else None,
                     'coins': int(player_data['coins']) if player_data.get('coins') else None,
-                    'match_length': int(player_data['match_length']) if player_data.get('match_length') else None
+                    'match_length': int(player_data['match_length']) if player_data.get('match_length') else None,
+                    'tags': int(player_data['tags']) if player_data.get('tags') is not None else None
                 }
                 new_rows.append(row)
             
@@ -197,7 +205,8 @@ def add_match_to_dataframe(df, match_data):
             'weapon': player_data['weapon'],
             'ping': int(player_data['ping']) if player_data.get('ping') else None,
             'coins': int(player_data['coins']) if player_data.get('coins') else None,
-            'match_length': int(player_data['match_length']) if player_data.get('match_length') else None
+            'match_length': int(player_data['match_length']) if player_data.get('match_length') else None,
+            'tags': int(player_data['tags']) if player_data.get('tags') is not None else None
         }
         new_rows.append(row)
     
