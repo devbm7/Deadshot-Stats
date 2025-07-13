@@ -82,34 +82,6 @@ st.markdown("""
 if 'match_data' not in st.session_state:
     st.session_state.match_data = load_match_data()
 
-# Add a refresh button for debugging
-if st.sidebar.button("🔄 Refresh Data", key="refresh_data"):
-    st.session_state.match_data = load_match_data()
-    st.sidebar.success("✅ Data refreshed!")
-
-# Debug: Show data loading status
-if st.sidebar.checkbox("🔍 Debug Data Loading", key="debug_data_loading"):
-    st.sidebar.write("**Data Loading Debug Info:**")
-    st.sidebar.write(f"Session state has match_data: {'match_data' in st.session_state}")
-    if 'match_data' in st.session_state:
-        df_debug = st.session_state.match_data
-        st.sidebar.write(f"DataFrame shape: {df_debug.shape}")
-        st.sidebar.write(f"DataFrame columns: {list(df_debug.columns)}")
-        if not df_debug.empty:
-            st.sidebar.write(f"Date range: {df_debug['datetime'].min()} to {df_debug['datetime'].max()}")
-            st.sidebar.write(f"Unique matches: {df_debug['match_id'].nunique()}")
-            st.sidebar.write(f"Unique players: {df_debug['player_name'].nunique()}")
-        else:
-            st.sidebar.write("⚠️ DataFrame is empty!")
-    
-    # Test Supabase connection
-    try:
-        from utils.supabase_client import get_supabase_client
-        supabase = get_supabase_client()
-        st.sidebar.success("✅ Supabase client initialized")
-    except Exception as e:
-        st.sidebar.error(f"❌ Supabase client error: {str(e)}")
-
 # Sidebar navigation
 st.sidebar.title("🎯 Deadshot Stats")
 
@@ -122,26 +94,9 @@ page = st.sidebar.selectbox(
 # Load data
 df = st.session_state.match_data
 
-# Fallback: if session state data is empty, try to reload
-if df.empty:
-    st.warning("⚠️ Session state data is empty, attempting to reload...")
-    df = load_match_data()
-    st.session_state.match_data = df
-    if not df.empty:
-        st.success("✅ Data reloaded successfully!")
-    else:
-        st.error("❌ Still no data available after reload")
-
 # Dashboard Page
 if page == "🏠 Dashboard":
     st.markdown('<h1 class="main-header">Deadshot Stats Dashboard</h1>', unsafe_allow_html=True)
-    
-    # Quick data status check
-    if df.empty:
-        st.error("❌ No data available. Please check the data loading configuration.")
-        st.info("💡 Try refreshing the page or checking the debug information in the sidebar.")
-    else:
-        st.success(f"✅ Data loaded successfully: {len(df)} records, {df['match_id'].nunique()} matches")
     
     # Create tabs for better organization
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Overview", "📈 Charts", "📋 Player Stats", "📅 Match Timeline"])
@@ -186,9 +141,6 @@ if page == "🏠 Dashboard":
                 st.metric("Recent Matches", recent_activity['recent_matches'])
             with col2:
                 st.metric("Recent Kills", recent_activity['recent_kills'])
-        else:
-            st.warning("⚠️ No recent activity data available")
-            st.info("This might be due to no data in the last 7 days or data loading issues.")
     
     with tab2:
         st.subheader("📈 Performance Charts")
@@ -460,11 +412,7 @@ elif page == "👥 Team Analysis":
 elif page == "📈 Match History":
     st.title("📈 Match History")
     
-    # Debug: Show available players (can be removed later)
-    if st.checkbox("Show Debug Info"):
-        st.write("Available players:", get_unique_players(df))
-        st.write("Available game modes:", get_unique_game_modes(df))
-        st.write("Available maps:", get_unique_maps(df))
+
     
     # Filters
     col1, col2, col3 = st.columns(3)
@@ -515,17 +463,6 @@ elif page == "📈 Match History":
     # Recent matches table
     st.subheader("Recent Matches")
     if not filtered_df.empty:
-        # Debug: Show filtered data info
-        if st.checkbox("Show Debug Info", key="debug_recent_matches"):
-            st.write(f"Filtered DataFrame shape: {filtered_df.shape}")
-            st.write(f"Unique match IDs: {filtered_df['match_id'].nunique()}")
-            st.write(f"Date range: {filtered_df['datetime'].min()} to {filtered_df['datetime'].max()}")
-            st.write(f"Available columns: {list(filtered_df.columns)}")
-            st.write(f"Sample data:")
-            st.write(filtered_df.head())
-        
-        # Additional debug info always shown
-        st.info(f"📊 Processing {filtered_df['match_id'].nunique()} unique matches for recent matches table")
         
         recent_matches = filtered_df.groupby('match_id').agg({
             'datetime': 'first',
@@ -541,8 +478,7 @@ elif page == "📈 Match History":
         # Robust datetime parsing for the aggregated data
         try:
             recent_matches['Date'] = pd.to_datetime(recent_matches['Date'], format='mixed', errors='coerce')
-        except Exception as e:
-            st.warning(f"⚠️ Error parsing aggregated dates: {str(e)}. Trying alternative parsing...")
+        except Exception:
             recent_matches['Date'] = pd.to_datetime(recent_matches['Date'], errors='coerce')
         
         # Normalize 'Date' to tz-naive before sorting
@@ -554,28 +490,7 @@ elif page == "📈 Match History":
         
         st.dataframe(recent_matches, use_container_width=True)
     else:
-        st.warning("⚠️ No matches found with the selected filters.")
-        
-        # Show original data info for debugging
-        st.info("**Debugging Information:**")
-        st.write(f"Original DataFrame shape: {df.shape}")
-        st.write(f"Original DataFrame empty: {df.empty}")
-        if not df.empty:
-            st.write(f"Original data date range: {df['datetime'].min()} to {df['datetime'].max()}")
-            st.write(f"Original data unique matches: {df['match_id'].nunique()}")
-        
-        # Show what filters are applied
-        st.write("**Applied Filters:**")
-        if len(date_range) == 2:
-            st.write(f"Date range: {date_range[0]} to {date_range[1]}")
-        if selected_players:
-            st.write(f"Selected players: {selected_players}")
-        if selected_mode != "All":
-            st.write(f"Selected mode: {selected_mode}")
-        
-        # Provide a button to clear filters
-        if st.button("🔄 Clear All Filters", key="clear_filters"):
-            st.rerun()
+        st.info("No matches found with the selected filters.")
 
 # Data Input Page
 elif page == "🎮 Data Input":

@@ -11,52 +11,42 @@ def load_match_data():
     # Try to load from Supabase first
     try:
         from utils.supabase_client import load_match_data_from_supabase
-        st.info("🔄 Attempting to load data from Supabase...")
         df = load_match_data_from_supabase()
         if not df.empty:
             # Robustly parse all datetime formats with better error handling
             try:
                 df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
-                st.success(f"✅ Loaded {len(df)} records from Supabase")
                 return df
-            except Exception as e:
-                st.warning(f"⚠️ Error parsing datetime from Supabase: {str(e)}. Trying alternative parsing...")
+            except Exception:
                 # Try alternative parsing methods
                 try:
                     df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
-                    st.success(f"✅ Loaded {len(df)} records from Supabase (alternative parsing)")
                     return df
-                except Exception as e2:
-                    st.error(f"❌ Failed to parse datetime: {str(e2)}. Falling back to CSV.")
+                except Exception:
                     return pd.DataFrame()  # Return empty to trigger CSV fallback
         else:
-            st.warning("⚠️ Supabase returned empty data, falling back to local CSV")
-    except Exception as e:
-        st.warning(f"Could not load from Supabase: {str(e)}. Falling back to local CSV.")
+            pass  # Fall back to CSV
+    except Exception:
+        pass  # Fall back to CSV
     
     # Fallback to CSV file
     csv_path = "data/matches.csv"
     if os.path.exists(csv_path):
-        st.info(f"📁 Loading data from local CSV: {csv_path}")
         try:
             df = pd.read_csv(csv_path)
             # Robustly parse all datetime formats with better error handling
             try:
                 df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
-                st.success(f"✅ Loaded {len(df)} records from local CSV")
                 return df
-            except Exception as e2:
-                st.warning(f"⚠️ Error parsing datetime from CSV: {str(e2)}. Trying alternative parsing...")
+            except Exception:
                 df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
-                st.success(f"✅ Loaded {len(df)} records from local CSV (alternative parsing)")
                 return df
-        except Exception as e:
-            st.error(f"❌ Error reading CSV file: {str(e)}")
+        except Exception:
+            pass
     else:
-        st.warning(f"⚠️ CSV file not found at: {csv_path}")
+        pass
     
     # If all else fails, return empty DataFrame with correct structure
-    st.error("❌ No data could be loaded from any source")
     return pd.DataFrame(columns=[
         'match_id', 'datetime', 'game_mode', 'map_name', 'team', 
         'player_name', 'kills', 'deaths', 'assists', 'score', 
