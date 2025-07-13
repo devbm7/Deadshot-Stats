@@ -65,7 +65,6 @@ def save_match_data_to_supabase(df: pd.DataFrame) -> bool:
     try:
         supabase = get_supabase_client()
         if not supabase:
-            st.error("Supabase client not initialized.")
             return False
         
         # Convert DataFrame to list of dictionaries
@@ -80,16 +79,13 @@ def save_match_data_to_supabase(df: pd.DataFrame) -> bool:
         # Insert all records
         try:
             response = supabase.table('matches').insert(records).execute()
-        except Exception as e:
-            st.error(f"Supabase insert error: {e}\nData: {records}")
+        except Exception:
             return False
         if response.data:
             return True
         else:
-            st.error(f"Supabase insert failed. Response: {response}")
             return False
-    except Exception as e:
-        st.error(f"Supabase save_match_data_to_supabase error: {e}")
+    except Exception:
         return False
 
 
@@ -98,7 +94,6 @@ def add_match_to_supabase(match_data: List[Dict]) -> bool:
     try:
         supabase = get_supabase_client()
         if not supabase:
-            st.error("Supabase client not initialized.")
             return False
         
         # Prepare data for insertion
@@ -127,16 +122,13 @@ def add_match_to_supabase(match_data: List[Dict]) -> bool:
         # Insert records
         try:
             response = supabase.table('matches').insert(records).execute()
-        except Exception as e:
-            st.error(f"Supabase insert error: {e}\nData: {records}")
+        except Exception:
             return False
         if response.data:
             return True
         else:
-            st.error(f"Supabase insert failed. Response: {response}")
             return False
-    except Exception as e:
-        st.error(f"Supabase add_match_to_supabase error: {e}")
+    except Exception:
         return False
 
 def get_next_match_id_from_supabase() -> int:

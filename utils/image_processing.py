@@ -84,11 +84,9 @@ def extract_data_from_image(image: Image.Image, api_key: str) -> Dict[str, Any]:
                 extracted_data = json.loads(response_text)
                 return extracted_data
             except json.JSONDecodeError:
-                st.error("Failed to parse Gemini API response as JSON")
                 return {"error": "Failed to parse response", "raw_response": response_text}
                 
     except Exception as e:
-        st.error(f"Error extracting data from image: {str(e)}")
         return {"error": str(e)}
 
 def validate_extracted_data(data: Dict[str, Any]) -> List[str]:

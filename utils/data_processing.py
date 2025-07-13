@@ -63,8 +63,8 @@ def save_match_data(df):
             os.makedirs("data", exist_ok=True)
             df.to_csv("data/matches.csv", index=False)
             return
-    except Exception as e:
-        st.warning(f"Could not save to Supabase: {str(e)}. Saving to local CSV only.")
+    except Exception:
+        pass
     
     # Fallback to CSV file only
     os.makedirs("data", exist_ok=True)
@@ -114,8 +114,7 @@ def get_next_match_id(df):
         # Try to get from Supabase first
         from utils.supabase_client import get_next_match_id_from_supabase
         return get_next_match_id_from_supabase()
-    except Exception as e:
-        st.warning(f"Could not get next match ID from Supabase: {str(e)}. Using local data.")
+    except Exception:
         # Fallback to local data
         if df.empty:
             return 1
@@ -177,8 +176,8 @@ def add_match_to_dataframe(df, match_data):
             
             new_df = pd.DataFrame(new_rows)
             return pd.concat([df, new_df], ignore_index=True)
-    except Exception as e:
-        st.warning(f"Could not add to Supabase: {str(e)}. Adding to local data only.")
+    except Exception:
+        pass
     
     # Fallback to local dataframe only
     new_rows = []
