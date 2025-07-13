@@ -301,7 +301,7 @@ if page == "🏠 Dashboard":
         
         with col1:
             st.markdown(f"""
-            <div class="metric-card">
+            <div class="metric-card" style="margin-bottom: 2rem;">
                 <h3>🎯 Total Matches</h3>
                 <h2>{overview_stats['total_matches']}</h2>
             </div>
@@ -309,7 +309,7 @@ if page == "🏠 Dashboard":
         
         with col2:
             st.markdown(f"""
-            <div class="metric-card">
+            <div class="metric-card" style="margin-bottom: 2rem;">
                 <h3>💀 Total Kills</h3>
                 <h2>{overview_stats['total_kills']}</h2>
             </div>
@@ -317,7 +317,7 @@ if page == "🏠 Dashboard":
         
         with col3:
             st.markdown(f"""
-            <div class="metric-card">
+            <div class="metric-card" style="margin-bottom: 2rem;">
                 <h3>⚖️ Avg K/D Ratio</h3>
                 <h2>{overview_stats['avg_kd_ratio']}</h2>
             </div>
@@ -330,7 +330,7 @@ if page == "🏠 Dashboard":
             with col1:
                 total_score = int(df['score'].sum())
                 st.markdown(f"""
-                <div class="metric-card">
+                <div class="metric-card" style="margin-bottom: 2rem;">
                     <h3>🏆 Total Score</h3>
                     <h2>{total_score:,}</h2>
                 </div>
@@ -338,7 +338,7 @@ if page == "🏠 Dashboard":
             
             with col2:
                 st.markdown(f"""
-                <div class="metric-card">
+                <div class="metric-card" style="margin-bottom: 2rem;">
                     <h3>🎮 Game Modes</h3>
                     <h2>{len(get_unique_game_modes(df))}</h2>
                 </div>

@@ -518,6 +518,7 @@ def get_recent_activity(df, days=7):
         'recent_matches': len(recent_data['match_id'].unique()),
         'recent_players': len(recent_data['player_name'].unique()),
         'recent_kills': int(recent_data['kills'].sum()),
+        'recent_score': int(recent_data['score'].sum()),
         'recent_weapons': recent_data['weapon'].value_counts().head(3).to_dict()
     }
 
