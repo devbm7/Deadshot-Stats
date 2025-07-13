@@ -14,36 +14,61 @@ def get_supabase_client() -> Client:
     if st.secrets and "supabase" in st.secrets:
         url = st.secrets["supabase"]["url"]
         key = st.secrets["supabase"]["key"]
+        st.info(f"🔑 Found Supabase credentials - URL: {url[:20]}... Key: {key[:10]}...")
+    else:
+        st.warning("⚠️ No Supabase secrets found in Streamlit configuration")
 
     if not url or not key:
+        st.error("❌ Supabase credentials not found. Please configure Streamlit secrets with [supabase] section containing url and key.")
         raise ValueError(
             "Supabase credentials not found. Please configure Streamlit secrets with [supabase] section containing url and key."
         )
-    return create_client(url, key)
+    
+    try:
+        client = create_client(url, key)
+        st.success("✅ Supabase client created successfully")
+        return client
+    except Exception as e:
+        st.error(f"❌ Error creating Supabase client: {str(e)}")
+        raise
 
 def load_match_data_from_supabase() -> pd.DataFrame:
     """Load match data from Supabase table"""
     try:
         supabase = get_supabase_client()
         if not supabase:
+            st.error("❌ Supabase client not initialized")
             return pd.DataFrame()
         
         # Fetch all matches from the table
+        st.info("🔄 Fetching data from Supabase table 'matches'...")
         response = supabase.table('matches').select('*').execute()
         
         if response.data:
             df = pd.DataFrame(response.data)
-            # Convert datetime string to pandas datetime
+            # Convert datetime string to pandas datetime with proper format handling
             if 'datetime' in df.columns:
-                df['datetime'] = pd.to_datetime(df['datetime'])
+                try:
+                    # Try ISO format first (common for Supabase)
+                    df['datetime'] = pd.to_datetime(df['datetime'], format='ISO8601', errors='coerce')
+                except Exception:
+                    try:
+                        # Fallback to mixed format
+                        df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
+                    except Exception:
+                        # Final fallback to default parsing
+                        df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
+            st.success(f"✅ Successfully loaded {len(df)} records from Supabase")
             return df
         else:
+            st.warning("⚠️ Supabase returned no data")
             return pd.DataFrame(columns=[
                 'match_id', 'datetime', 'game_mode', 'map_name', 'team', 
                 'player_name', 'kills', 'deaths', 'assists', 'score', 
                 'weapon', 'ping', 'coins', 'match_length'
             ])
-    except Exception:
+    except Exception as e:
+        st.error(f"❌ Error loading from Supabase: {str(e)}")
         return pd.DataFrame()
 
 def save_match_data_to_supabase(df: pd.DataFrame) -> bool:

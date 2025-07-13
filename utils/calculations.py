@@ -401,12 +401,22 @@ def get_recent_activity(df, days=7):
     """Get recent activity summary"""
     if df.empty:
         return {}
+    
+    # Robust datetime parsing with multiple fallbacks
+    try:
+        datetimes = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
+    except Exception:
+        try:
+            datetimes = pd.to_datetime(df['datetime'], format='ISO8601', errors='coerce')
+        except Exception:
+            datetimes = pd.to_datetime(df['datetime'], errors='coerce')
+    
     # Normalize all datetimes to tz-naive for comparison (robust to mixed tz-aware/tz-naive)
-    datetimes = pd.to_datetime(df['datetime'], errors='coerce')
     if hasattr(datetimes.dt, 'tz_localize'):
         # Remove timezone if any values are tz-aware
         if datetimes.dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in datetimes if pd.notnull(x)):
             datetimes = datetimes.dt.tz_localize(None)
+    
     recent_date = datetimes.max() - pd.Timedelta(days=days)
     recent_data = df[datetimes >= recent_date]
     return {

@@ -6,31 +6,62 @@ import streamlit as st
 
 def load_match_data():
     """Load match data from Supabase or CSV file as fallback"""
+    df = None
+    
+    # Try to load from Supabase first
     try:
-        # Try to load from Supabase first
         from utils.supabase_client import load_match_data_from_supabase
+        st.info("🔄 Attempting to load data from Supabase...")
         df = load_match_data_from_supabase()
         if not df.empty:
-            # Robustly parse all datetime formats
-            df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
-            return df
+            # Robustly parse all datetime formats with better error handling
+            try:
+                df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
+                st.success(f"✅ Loaded {len(df)} records from Supabase")
+                return df
+            except Exception as e:
+                st.warning(f"⚠️ Error parsing datetime from Supabase: {str(e)}. Trying alternative parsing...")
+                # Try alternative parsing methods
+                try:
+                    df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
+                    st.success(f"✅ Loaded {len(df)} records from Supabase (alternative parsing)")
+                    return df
+                except Exception as e2:
+                    st.error(f"❌ Failed to parse datetime: {str(e2)}. Falling back to CSV.")
+                    return pd.DataFrame()  # Return empty to trigger CSV fallback
+        else:
+            st.warning("⚠️ Supabase returned empty data, falling back to local CSV")
     except Exception as e:
         st.warning(f"Could not load from Supabase: {str(e)}. Falling back to local CSV.")
     
     # Fallback to CSV file
     csv_path = "data/matches.csv"
     if os.path.exists(csv_path):
-        df = pd.read_csv(csv_path)
-        # Robustly parse all datetime formats
-        df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
-        return df
+        st.info(f"📁 Loading data from local CSV: {csv_path}")
+        try:
+            df = pd.read_csv(csv_path)
+            # Robustly parse all datetime formats with better error handling
+            try:
+                df['datetime'] = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
+                st.success(f"✅ Loaded {len(df)} records from local CSV")
+                return df
+            except Exception as e2:
+                st.warning(f"⚠️ Error parsing datetime from CSV: {str(e2)}. Trying alternative parsing...")
+                df['datetime'] = pd.to_datetime(df['datetime'], errors='coerce')
+                st.success(f"✅ Loaded {len(df)} records from local CSV (alternative parsing)")
+                return df
+        except Exception as e:
+            st.error(f"❌ Error reading CSV file: {str(e)}")
     else:
-        # Return empty DataFrame with correct structure
-        return pd.DataFrame(columns=[
-            'match_id', 'datetime', 'game_mode', 'map_name', 'team', 
-            'player_name', 'kills', 'deaths', 'assists', 'score', 
-            'weapon', 'ping', 'coins', 'match_length'
-        ])
+        st.warning(f"⚠️ CSV file not found at: {csv_path}")
+    
+    # If all else fails, return empty DataFrame with correct structure
+    st.error("❌ No data could be loaded from any source")
+    return pd.DataFrame(columns=[
+        'match_id', 'datetime', 'game_mode', 'map_name', 'team', 
+        'player_name', 'kills', 'deaths', 'assists', 'score', 
+        'weapon', 'ping', 'coins', 'match_length'
+    ])
 
 def save_match_data(df):
     """Save match data to Supabase and CSV file as backup"""
@@ -188,12 +219,21 @@ def filter_data_by_date_range(df, start_date, end_date):
     """Filter data by date range (robust to timezone-aware/naive)"""
     if df.empty:
         return df
-    # Normalize all datetimes to tz-naive for comparison
-    datetimes = pd.to_datetime(df['datetime'], errors='coerce')
+    
+    # Robust datetime parsing with multiple fallbacks
+    try:
+        datetimes = pd.to_datetime(df['datetime'], format='mixed', errors='coerce')
+    except Exception:
+        try:
+            datetimes = pd.to_datetime(df['datetime'], format='ISO8601', errors='coerce')
+        except Exception:
+            datetimes = pd.to_datetime(df['datetime'], errors='coerce')
+    
     # Convert to tz-naive if needed
     if hasattr(datetimes.dt, 'tz_localize'):
         if datetimes.dt.tz is not None or any(getattr(x, 'tzinfo', None) is not None for x in datetimes if pd.notnull(x)):
             datetimes = datetimes.dt.tz_localize(None)
+    
     # Also ensure start_date and end_date are tz-naive
     if getattr(start_date, 'tzinfo', None) is not None:
         if hasattr(start_date, 'tz_localize'):
@@ -205,6 +245,7 @@ def filter_data_by_date_range(df, start_date, end_date):
             end_date = end_date.tz_localize(None)
         else:
             end_date = end_date.replace(tzinfo=None)
+    
     mask = (datetimes >= start_date) & (datetimes <= end_date)
     return df[mask]
 
