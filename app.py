@@ -297,7 +297,7 @@ if page == "🏠 Dashboard":
         overview_stats = create_overview_cards(df)
         
         # Main metrics row
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             st.markdown(f"""
@@ -323,30 +323,11 @@ if page == "🏠 Dashboard":
             </div>
             """, unsafe_allow_html=True)
         
-        with col4:
-            # Calculate additional metrics
-            total_players = len(get_unique_players(df)) if not df.empty else 0
-            st.markdown(f"""
-            <div class="metric-card">
-                <h3>👥 Active Players</h3>
-                <h2>{total_players}</h2>
-            </div>
-            """, unsafe_allow_html=True)
-        
         # Secondary metrics row
         if not df.empty:
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2 = st.columns(2)
             
             with col1:
-                total_deaths = int(df['deaths'].sum())
-                st.markdown(f"""
-                <div class="metric-card">
-                    <h3>💔 Total Deaths</h3>
-                    <h2>{total_deaths}</h2>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col2:
                 total_score = int(df['score'].sum())
                 st.markdown(f"""
                 <div class="metric-card">
@@ -355,38 +336,20 @@ if page == "🏠 Dashboard":
                 </div>
                 """, unsafe_allow_html=True)
             
-            with col3:
-                total_time = int(df['match_length'].sum())
+            with col2:
                 st.markdown(f"""
                 <div class="metric-card">
-                    <h3>⏱️ Total Time</h3>
-                    <h2>{total_time}m</h2>
+                    <h3>🎮 Game Modes</h3>
+                    <h2>{len(get_unique_game_modes(df))}</h2>
                 </div>
                 """, unsafe_allow_html=True)
-            
-            with col4:
-                if 'tags' in df.columns:
-                    total_tags = int(df['tags'].sum())
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <h3>🏷️ Total Tags</h3>
-                        <h2>{total_tags}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div class="metric-card">
-                        <h3>🎮 Game Modes</h3>
-                        <h2>{len(get_unique_game_modes(df))}</h2>
-                    </div>
-                    """, unsafe_allow_html=True)
         
         # Recent activity with enhanced styling
         st.markdown("### 📈 Recent Activity")
         recent_activity = get_recent_activity(df)
         
         if recent_activity:
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2, col3 = st.columns(3)
             with col1:
                 st.markdown(f"""
                 <div class="status-card status-success">
@@ -402,14 +365,6 @@ if page == "🏠 Dashboard":
                 </div>
                 """, unsafe_allow_html=True)
             with col3:
-                recent_deaths = recent_activity.get('recent_deaths', 0)
-                st.markdown(f"""
-                <div class="status-card status-warning">
-                    <h4>💔 Recent Deaths</h4>
-                    <h3>{recent_deaths}</h3>
-                </div>
-                """, unsafe_allow_html=True)
-            with col4:
                 recent_score = recent_activity.get('recent_score', 0)
                 st.markdown(f"""
                 <div class="status-card status-success">
@@ -1837,13 +1792,11 @@ st.sidebar.markdown("""
 if not df.empty:
     total_matches = len(df['match_id'].unique())
     total_kills = df['kills'].sum()
-    total_players = len(get_unique_players(df))
     
     st.sidebar.markdown(f"""
     <div class="status-card status-success">
         <h4>🎮 {total_matches} Matches</h4>
         <h4>💀 {total_kills:,} Kills</h4>
-        <h4>👥 {total_players} Players</h4>
     </div>
     """, unsafe_allow_html=True)
 else:
