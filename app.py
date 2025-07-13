@@ -51,28 +51,207 @@ st.set_page_config(
 # Custom CSS for better styling
 st.markdown("""
 <style>
+    /* Modern Gaming Theme */
+    :root {
+        --primary-color: #6366f1;
+        --secondary-color: #8b5cf6;
+        --accent-color: #f59e0b;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        --dark-bg: #0f172a;
+        --card-bg: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --border-color: #334155;
+    }
+    
+    /* Main Header */
     .main-header {
-        font-size: 3rem;
-        font-weight: bold;
-        color: #1f77b4;
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         text-align: center;
         margin-bottom: 2rem;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
+    
+    /* Enhanced Metric Cards */
     .metric-card {
-        background-color: #f0f2f6;
+        background: linear-gradient(135deg, var(--card-bg), #2d3748);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    
+    .metric-card h3 {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-card h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text-primary);
+    }
+    
+    /* Status Cards */
+    .status-card {
+        background: var(--card-bg);
         padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-        color: #000000;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+        margin: 0.5rem 0;
     }
+    
+    .status-success {
+        border-left: 4px solid var(--success-color);
+    }
+    
+    .status-warning {
+        border-left: 4px solid var(--warning-color);
+    }
+    
+    .status-error {
+        border-left: 4px solid var(--error-color);
+    }
+    
+    /* Enhanced Sidebar */
     .sidebar .sidebar-content {
-        background-color: #f8f9fa;
+        background: linear-gradient(180deg, var(--dark-bg), #1e293b);
+        border-right: 1px solid var(--border-color);
     }
+    
+    /* Custom Buttons */
+    .stButton > button {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+    }
+    
+    /* Tab Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: var(--card-bg);
+        border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    /* Dataframe Styling */
+    .dataframe {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+    
+    /* Progress Bars */
+    .progress-container {
+        background: var(--border-color);
+        border-radius: 1rem;
+        height: 8px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--success-color), var(--accent-color));
+        border-radius: 1rem;
+        transition: width 0.3s ease;
+    }
+    
+    /* Achievement Badges */
+    .achievement-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 0.25rem;
+        background: linear-gradient(135deg, var(--accent-color), #f97316);
+        color: white;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+    
+    /* Loading Animation */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--border-color);
+        border-radius: 50%;
+        border-top-color: var(--primary-color);
+        animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .main-header {
+            font-size: 2.5rem;
+        }
+        
+        .metric-card h2 {
+            font-size: 2rem;
+        }
+    }
+    
     /* Dark mode compatibility */
     @media (prefers-color-scheme: dark) {
         .metric-card {
-            background-color: #2d3748;
-            color: #ffffff;
+            background: var(--card-bg);
+            color: var(--text-primary);
         }
     }
 </style>
@@ -82,13 +261,25 @@ st.markdown("""
 if 'match_data' not in st.session_state:
     st.session_state.match_data = load_match_data()
 
-# Sidebar navigation
-st.sidebar.title("🎯 Deadshot Stats")
+# Enhanced Sidebar navigation
+st.sidebar.markdown("""
+<div style="text-align: center; padding: 1rem 0;">
+    <h1 style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">
+        Deadshot Stats
+    </h1>
+    <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0.5rem 0 0 0;">
+        Gaming Analytics Dashboard
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
+# Navigation with enhanced styling
+st.sidebar.markdown("### 🧭 Navigation")
 page = st.sidebar.selectbox(
-    "Navigation",
+    "Choose a page",
     ["🏠 Dashboard", "📊 Player Analysis", "👥 Team Analysis", "📈 Match History", 
-     "🎮 Data Input", "🔧 Advanced Analytics", "📋 Leaderboards", "🎉 Fun Features", "🎛️ Interactive Dashboards"]
+     "🎮 Data Input", "🔧 Advanced Analytics", "📋 Leaderboards", "🎉 Fun Features", "🎛️ Interactive Dashboards"],
+    help="Select a page to navigate to"
 )
 
 # Load data
@@ -105,12 +296,13 @@ if page == "🏠 Dashboard":
         # Overview cards
         overview_stats = create_overview_cards(df)
         
-        col1, col2, col3 = st.columns(3)
+        # Main metrics row
+        col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             st.markdown(f"""
             <div class="metric-card">
-                <h3>Total Matches</h3>
+                <h3>🎯 Total Matches</h3>
                 <h2>{overview_stats['total_matches']}</h2>
             </div>
             """, unsafe_allow_html=True)
@@ -118,7 +310,7 @@ if page == "🏠 Dashboard":
         with col2:
             st.markdown(f"""
             <div class="metric-card">
-                <h3>Total Kills</h3>
+                <h3>💀 Total Kills</h3>
                 <h2>{overview_stats['total_kills']}</h2>
             </div>
             """, unsafe_allow_html=True)
@@ -126,21 +318,105 @@ if page == "🏠 Dashboard":
         with col3:
             st.markdown(f"""
             <div class="metric-card">
-                <h3>Avg K/D Ratio</h3>
+                <h3>⚖️ Avg K/D Ratio</h3>
                 <h2>{overview_stats['avg_kd_ratio']}</h2>
             </div>
             """, unsafe_allow_html=True)
         
-        # Recent activity
-        st.subheader("📈 Recent Activity")
+        with col4:
+            # Calculate additional metrics
+            total_players = len(get_unique_players(df)) if not df.empty else 0
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3>👥 Active Players</h3>
+                <h2>{total_players}</h2>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Secondary metrics row
+        if not df.empty:
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                total_deaths = int(df['deaths'].sum())
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h3>💔 Total Deaths</h3>
+                    <h2>{total_deaths}</h2>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                total_score = int(df['score'].sum())
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h3>🏆 Total Score</h3>
+                    <h2>{total_score:,}</h2>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                total_time = int(df['match_length'].sum())
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h3>⏱️ Total Time</h3>
+                    <h2>{total_time}m</h2>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                if 'tags' in df.columns:
+                    total_tags = int(df['tags'].sum())
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <h3>🏷️ Total Tags</h3>
+                        <h2>{total_tags}</h2>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <h3>🎮 Game Modes</h3>
+                        <h2>{len(get_unique_game_modes(df))}</h2>
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        # Recent activity with enhanced styling
+        st.markdown("### 📈 Recent Activity")
         recent_activity = get_recent_activity(df)
         
         if recent_activity:
-            col1, col2 = st.columns(2)
+            col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("Recent Matches", recent_activity['recent_matches'])
+                st.markdown(f"""
+                <div class="status-card status-success">
+                    <h4>📊 Recent Matches</h4>
+                    <h3>{recent_activity['recent_matches']}</h3>
+                </div>
+                """, unsafe_allow_html=True)
             with col2:
-                st.metric("Recent Kills", recent_activity['recent_kills'])
+                st.markdown(f"""
+                <div class="status-card status-success">
+                    <h4>💀 Recent Kills</h4>
+                    <h3>{recent_activity['recent_kills']}</h3>
+                </div>
+                """, unsafe_allow_html=True)
+            with col3:
+                recent_deaths = recent_activity.get('recent_deaths', 0)
+                st.markdown(f"""
+                <div class="status-card status-warning">
+                    <h4>💔 Recent Deaths</h4>
+                    <h3>{recent_deaths}</h3>
+                </div>
+                """, unsafe_allow_html=True)
+            with col4:
+                recent_score = recent_activity.get('recent_score', 0)
+                st.markdown(f"""
+                <div class="status-card status-success">
+                    <h4>🏆 Recent Score</h4>
+                    <h3>{recent_score:,}</h3>
+                </div>
+                """, unsafe_allow_html=True)
     
     with tab2:
         st.subheader("📈 Performance Charts")
@@ -241,22 +517,75 @@ elif page == "📊 Player Analysis":
                 tab1, tab2, tab3, tab4 = st.tabs(["📊 Overview", "📈 Performance", "🎯 Details", "📊 Comparison"])
                 
                 with tab1:
-                    st.subheader(f"📊 {selected_player} Overview")
+                    st.markdown(f"### 📊 {selected_player} Overview")
                     
-                    # Player stats cards
+                    # Player stats cards with enhanced styling
                     col1, col2, col3, col4 = st.columns(4)
                     
                     with col1:
-                        st.metric("K/D Ratio", f"{player_stats['kd_ratio']}")
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h3>⚖️ K/D Ratio</h3>
+                            <h2>{player_stats['kd_ratio']:.2f}</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
                     with col2:
-                        st.metric("Win Rate", f"{player_stats['win_rate']}%")
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h3>🏆 Win Rate</h3>
+                            <h2>{player_stats['win_rate']:.1f}%</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
                     with col3:
-                        st.metric("Kills/Min", f"{player_stats['kills_per_minute']}")
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h3>💀 Kills/Min</h3>
+                            <h2>{player_stats['kills_per_minute']:.2f}</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
                     with col4:
-                        st.metric("Total Matches", player_stats['total_matches'])
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h3>🎮 Total Matches</h3>
+                            <h2>{player_stats['total_matches']}</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
                     
-                    # Performance trend
-                    st.subheader("Performance Over Time (Per-Minute)")
+                    # Secondary stats row
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h3>💔 Deaths/Min</h3>
+                            <h2>{player_stats['deaths_per_minute']:.2f}</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col2:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h3>🤝 Assists/Min</h3>
+                            <h2>{player_stats['assists_per_minute']:.2f}</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col3:
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h3>🏆 Score/Min</h3>
+                            <h2>{player_stats['score_per_minute']:.2f}</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    with col4:
+                        tags_per_min = player_stats.get('tags_per_minute', 0)
+                        st.markdown(f"""
+                        <div class="metric-card">
+                            <h3>🏷️ Tags/Min</h3>
+                            <h2>{tags_per_min:.2f}</h2>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Performance trend with enhanced title
+                    st.markdown("### 📈 Performance Over Time (Per-Minute)")
                     st.plotly_chart(create_player_performance_trend(df, selected_player), use_container_width=True, key="player_performance_trend")
                 
                 with tab2:
@@ -507,16 +836,34 @@ elif page == "🎮 Data Input":
     input_tab1, input_tab2 = st.tabs(["📷 Image Upload", "✏️ Manual Input"])
     
     with input_tab1:
-        st.subheader("📷 Upload Screenshot")
-        st.write("Upload a screenshot of the match results to automatically extract data using AI.")
+        st.markdown("### 📷 Upload Screenshot")
+        st.markdown("""
+        <div class="status-card status-success">
+            <h4>🤖 AI-Powered Data Extraction</h4>
+            <p>Upload a screenshot of your match results and let our AI automatically extract all the data for you!</p>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Check Gemini API configuration
         api_key = get_gemini_api_key()
         
         if not api_key:
+            st.markdown("""
+            <div class="status-card status-error">
+                <h4>⚠️ Gemini API Not Configured</h4>
+                <p>Please set up your Gemini API key to use the AI extraction feature.</p>
+            </div>
+            """, unsafe_allow_html=True)
             show_gemini_status()
         else:
-            # File upload
+            # File upload with enhanced styling
+            st.markdown("""
+            <div class="status-card status-success">
+                <h4>📤 Ready to Upload</h4>
+                <p>Supported formats: PNG, JPG, JPEG</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
             uploaded_file = st.file_uploader(
                 "Choose a screenshot file", 
                 type=['png', 'jpg', 'jpeg'],
@@ -1129,35 +1476,85 @@ elif page == "📋 Leaderboards":
     leaderboard_df = get_leaderboard_data(df, metric_map[leaderboard_type])
     
     if not leaderboard_df.empty:
-        # Display leaderboard
-        st.subheader(f"Top Players by {leaderboard_type}")
+        # Display leaderboard with enhanced styling
+        st.markdown(f"### 🏆 Top Players by {leaderboard_type}")
         
         # Format the display
         display_df = leaderboard_df.copy()
         display_df = display_df.round(2)
         
-        # Add rank column
-        display_df.insert(0, 'Rank', range(1, len(display_df) + 1))
+        # Add rank column with emojis
+        ranks = []
+        for i in range(1, len(display_df) + 1):
+            if i == 1:
+                ranks.append("🥇")
+            elif i == 2:
+                ranks.append("🥈")
+            elif i == 3:
+                ranks.append("🥉")
+            else:
+                ranks.append(f"#{i}")
         
+        display_df.insert(0, 'Rank', ranks)
+        
+        # Display top 3 with special styling
+        if len(display_df) >= 3:
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h3>🥇 1st Place</h3>
+                    <h2>{display_df.iloc[0]['player_name']}</h2>
+                    <p>{display_df.iloc[0][metric_map[leaderboard_type]]:.2f}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col2:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h3>🥈 2nd Place</h3>
+                    <h2>{display_df.iloc[1]['player_name']}</h2>
+                    <p>{display_df.iloc[1][metric_map[leaderboard_type]]:.2f}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col3:
+                st.markdown(f"""
+                <div class="metric-card">
+                    <h3>🥉 3rd Place</h3>
+                    <h2>{display_df.iloc[2]['player_name']}</h2>
+                    <p>{display_df.iloc[2][metric_map[leaderboard_type]]:.2f}</p>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # Full leaderboard table
+        st.markdown("### 📋 Complete Leaderboard")
         st.dataframe(display_df, use_container_width=True)
         
-        # Create chart
+        # Create enhanced chart
         fig = go.Figure(data=[
             go.Bar(
                 x=leaderboard_df['player_name'].head(10),
                 y=leaderboard_df[metric_map[leaderboard_type]].head(10),
                 text=leaderboard_df[metric_map[leaderboard_type]].head(10),
                 textposition='auto',
-                marker_color='#1f77b4'
+                marker=dict(
+                    color=['#FFD700', '#C0C0C0', '#CD7F32'] + ['#6366f1'] * 7,
+                    line=dict(color='#1e293b', width=1)
+                )
             )
         ])
         
         fig.update_layout(
-            title=f'Top 10 Players by {leaderboard_type}',
+            title=f'🏆 Top 10 Players by {leaderboard_type}',
             xaxis_title='Player',
             yaxis_title=leaderboard_type,
             showlegend=False,
-            height=400
+            height=500,
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='#f8fafc')
         )
         
         st.plotly_chart(fig, use_container_width=True)
@@ -1428,18 +1825,34 @@ elif page == "🎛️ Interactive Dashboards":
         else:
             st.info("Need at least 3 players for scenario simulation.")
 
-# Footer
+# Enhanced Footer
 st.sidebar.markdown("---")
-st.sidebar.markdown("**Deadshot Stats Dashboard**")
-st.sidebar.markdown("Track your gaming performance!")
+st.sidebar.markdown("""
+<div style="text-align: center; padding: 1rem 0;">
+    <h4 style="color: #f8fafc; margin: 0;">📊 Data Summary</h4>
+</div>
+""", unsafe_allow_html=True)
 
-# Data info
+# Data info with enhanced styling
 if not df.empty:
-    st.sidebar.markdown(f"**Data Summary:**")
-    st.sidebar.markdown(f"• {len(df['match_id'].unique())} matches")
-    st.sidebar.markdown(f"• {df['kills'].sum()} total kills")
+    total_matches = len(df['match_id'].unique())
+    total_kills = df['kills'].sum()
+    total_players = len(get_unique_players(df))
+    
+    st.sidebar.markdown(f"""
+    <div class="status-card status-success">
+        <h4>🎮 {total_matches} Matches</h4>
+        <h4>💀 {total_kills:,} Kills</h4>
+        <h4>👥 {total_players} Players</h4>
+    </div>
+    """, unsafe_allow_html=True)
 else:
-    st.sidebar.markdown("No data loaded yet.")
+    st.sidebar.markdown("""
+    <div class="status-card status-warning">
+        <h4>📝 No Data Yet</h4>
+        <p>Add some matches to see your stats!</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # App Information
 st.sidebar.markdown("---")
