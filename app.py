@@ -51,6 +51,9 @@ st.set_page_config(
 # Custom CSS for better styling
 st.markdown("""
 <style>
+    /* Import Poppins font */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+    
     /* Modern Gaming Theme */
     :root {
         --primary-color: #6366f1;
@@ -66,13 +69,17 @@ st.markdown("""
         --border-color: #334155;
     }
     
+    /* Global font family */
+    * {
+        font-family: 'Poppins', sans-serif;
+    }
+    
     /* Main Header */
     .main-header {
         font-size: 3.5rem;
         font-weight: 800;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-primary);
         text-align: center;
         margin-bottom: 2rem;
         text-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -110,6 +117,7 @@ st.markdown("""
         color: var(--text-secondary);
         font-size: 0.9rem;
         font-weight: 600;
+        font-family: 'Poppins', sans-serif;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 0.5rem;
@@ -118,6 +126,7 @@ st.markdown("""
     .metric-card h2 {
         font-size: 2.5rem;
         font-weight: 700;
+        font-family: 'Poppins', sans-serif;
         margin: 0;
         color: var(--text-primary);
     }
@@ -129,6 +138,7 @@ st.markdown("""
         border-radius: 0.75rem;
         border: 1px solid var(--border-color);
         margin: 0.5rem 0;
+        font-family: 'Poppins', sans-serif;
     }
     
     .status-success {
@@ -156,6 +166,7 @@ st.markdown("""
         border-radius: 0.75rem;
         padding: 0.75rem 1.5rem;
         font-weight: 600;
+        font-family: 'Poppins', sans-serif;
         transition: all 0.3s ease;
         box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
@@ -176,6 +187,7 @@ st.markdown("""
         border: 1px solid var(--border-color);
         color: var(--text-secondary);
         font-weight: 600;
+        font-family: 'Poppins', sans-serif;
         transition: all 0.3s ease;
     }
     
@@ -264,7 +276,7 @@ if 'match_data' not in st.session_state:
 # Enhanced Sidebar navigation
 st.sidebar.markdown("""
 <div style="text-align: center; padding: 1rem 0;">
-    <h1 style="font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">
+    <h1 style="font-size: 2rem; font-weight: 800; font-family: 'Poppins', sans-serif; color: #f8fafc; margin: 0;">
         Deadshot Stats
     </h1>
     <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0.5rem 0 0 0;">
@@ -792,12 +804,6 @@ elif page == "🎮 Data Input":
     
     with input_tab1:
         st.markdown("### 📷 Upload Screenshot")
-        st.markdown("""
-        <div class="status-card status-success">
-            <h4>🤖 AI-Powered Data Extraction</h4>
-            <p>Upload a screenshot of your match results and let our AI automatically extract all the data for you!</p>
-        </div>
-        """, unsafe_allow_html=True)
         
         # Check Gemini API configuration
         api_key = get_gemini_api_key()
