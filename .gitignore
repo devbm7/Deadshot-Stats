@@ -1,4 +1,5 @@
 utils/__pycache__
+tests/__pycache__
 Plan.md
 .env
 secrets.toml
