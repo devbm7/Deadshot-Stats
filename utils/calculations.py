@@ -151,12 +151,18 @@ def get_player_streaks(df, player_name):
                     won = False
         elif game_mode == 'Confirm':
             # Confirm mode - winner by individual tags
-            player_tags = match_data[match_data['player_name'] == player_name]['tags'].iloc[0]
-            max_tags = match_data['tags'].max()
-            if player_tags == max_tags:
-                wins += 1
+            player_row = match_data[match_data['player_name'] == player_name]
+            if not player_row.empty and 'tags' in player_row and pd.notna(player_row['tags'].iloc[0]):
+                player_tags = player_row['tags'].iloc[0]
+                max_tags = match_data['tags'].max()
+                # Count win if player is tied for max tags (allow ties)
+                if player_tags == max_tags:
+                    wins += 1
+                else:
+                    losses += 1
             else:
-                losses += 1
+                # If no tags info, skip this match (do not count as win/loss)
+                continue
         else:
             # FFA match
             player_score = match_data[match_data['player_name'] == player_name]['score'].iloc[0]
