@@ -118,7 +118,10 @@ def get_player_streaks(df, player_name):
     
     player_matches = df[df['player_name'] == player_name]['match_id'].unique()
     match_results = []
-    
+
+    wins = 0
+    losses = 0
+
     for match_id in player_matches:
         match_data = df[df['match_id'] == match_id]
         game_mode = match_data.iloc[0]['game_mode']
