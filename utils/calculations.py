@@ -153,7 +153,10 @@ def get_player_streaks(df, player_name):
             # Confirm mode - winner by individual tags
             player_tags = match_data[match_data['player_name'] == player_name]['tags'].iloc[0]
             max_tags = match_data['tags'].max()
-            won = player_tags == max_tags
+            if player_tags == max_tags:
+                wins += 1
+            else:
+                losses += 1
         else:
             # FFA match
             player_score = match_data[match_data['player_name'] == player_name]['score'].iloc[0]
