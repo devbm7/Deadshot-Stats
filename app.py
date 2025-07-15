@@ -803,6 +803,7 @@ elif page == "🎮 Data Input":
     input_tab1, input_tab2 = st.tabs(["📷 Image Upload", "✏️ Manual Input"])
     
     with input_tab1:
+        df = st.session_state.match_data  # Always use the latest data
         st.markdown("### 📷 Upload Screenshot")
         
         # Check Gemini API configuration
@@ -1097,6 +1098,7 @@ elif page == "🎮 Data Input":
                             st.rerun()
     
     with input_tab2:
+        df = st.session_state.match_data  # Always use the latest data
         st.subheader("✏️ Manual Data Entry")
         st.write("Enter match data manually.")
         
