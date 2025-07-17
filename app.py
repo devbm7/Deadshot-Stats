@@ -888,8 +888,30 @@ elif page == "🎮 Data Input":
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    match_date = st.date_input("Match Date", value=datetime.now().date(), key="extracted_date")
-                    match_time = st.time_input("Match Time", value=datetime.now().time(), key="extracted_time")
+                    # Pre-fill date and time from extracted data if available
+                    extracted_datetime = extracted_data.get("datetime")
+                    if extracted_datetime:
+                        try:
+                            # Try to parse the extracted datetime
+                            if isinstance(extracted_datetime, str):
+                                dt_val = pd.to_datetime(extracted_datetime, errors="coerce")
+                            else:
+                                dt_val = pd.to_datetime(extracted_datetime)
+                            if pd.notnull(dt_val):
+                                default_date = dt_val.date()
+                                default_time = dt_val.time()
+                            else:
+                                default_date = datetime.now().date()
+                                default_time = datetime.now().time()
+                        except Exception:
+                            default_date = datetime.now().date()
+                            default_time = datetime.now().time()
+                    else:
+                        default_date = datetime.now().date()
+                        default_time = datetime.now().time()
+
+                    match_date = st.date_input("Match Date", value=default_date, key="extracted_date")
+                    match_time = st.time_input("Match Time", value=default_time, key="extracted_time")
                     match_datetime = datetime.combine(match_date, match_time)
                 
                 with col2:
