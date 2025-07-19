@@ -6,6 +6,7 @@ This file contains configuration settings and instructions for setting up Supaba
 
 import streamlit as st
 
+
 # Supabase Configuration
 def get_supabase_config():
     """Get Supabase configuration from Streamlit secrets"""
@@ -16,6 +17,7 @@ def get_supabase_config():
         }
     return {"url": None, "key": None}
 
+
 # Gemini API Configuration
 def get_gemini_api_key():
     """
@@ -25,10 +27,12 @@ def get_gemini_api_key():
         return st.secrets["gemini"]["api_key"]
     return None
 
+
 def check_gemini_config():
     """Check if Gemini API is properly configured"""
     api_key = get_gemini_api_key()
     return api_key is not None and api_key.strip() != ""
+
 
 def get_gemini_instructions():
     """Return instructions for setting up Gemini API"""
@@ -63,6 +67,7 @@ def get_gemini_instructions():
     Once configured, you can upload screenshots and the AI will automatically extract match data.
     """
 
+
 def show_gemini_status():
     """Show Gemini API connection status"""
     if check_gemini_config():
@@ -70,10 +75,10 @@ def show_gemini_status():
         return True
     else:
         st.error("❌ Gemini API is not configured")
-        
+
         # Provide more specific debugging information
         st.info("**Debugging Information:**")
-        
+
         # Check if secrets are available
         if st.secrets:
             st.write("✅ Streamlit secrets are available")
@@ -91,11 +96,14 @@ def show_gemini_status():
                 st.write(f"❌ Error reading secrets: {e}")
         else:
             st.write("❌ No Streamlit secrets available")
-        
-        st.info("Please set up your Gemini API key to enable AI-powered image extraction.")
+
+        st.info(
+            "Please set up your Gemini API key to enable AI-powered image extraction."
+        )
         with st.expander("📋 Gemini API Setup Instructions"):
             st.markdown(get_gemini_instructions())
         return False
+
 
 def check_supabase_config():
     """Check if Supabase is properly configured"""
@@ -103,6 +111,7 @@ def check_supabase_config():
     if not config["url"] or not config["key"]:
         return False
     return True
+
 
 def get_supabase_instructions():
     """Return instructions for setting up Supabase"""
@@ -176,6 +185,7 @@ def get_supabase_instructions():
     ```
     """
 
+
 def show_supabase_status():
     """Show Supabase connection status"""
     if check_supabase_config():
@@ -186,4 +196,4 @@ def show_supabase_status():
         st.info("Please set up your Supabase credentials to enable cloud storage.")
         with st.expander("📋 Supabase Setup Instructions"):
             st.markdown(get_supabase_instructions())
-        return False 
+        return False

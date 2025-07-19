@@ -2,16 +2,17 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
+
 def create_metric_card(title, value, subtitle="", icon="", color="primary"):
     """Create a styled metric card"""
     colors = {
         "primary": "#6366f1",
-        "success": "#10b981", 
+        "success": "#10b981",
         "warning": "#f59e0b",
         "error": "#ef4444",
-        "info": "#3b82f6"
+        "info": "#3b82f6",
     }
-    
+
     return f"""
     <div class="metric-card" style="border-left-color: {colors.get(color, colors['primary'])};">
         <h3>{icon} {title}</h3>
@@ -20,15 +21,16 @@ def create_metric_card(title, value, subtitle="", icon="", color="primary"):
     </div>
     """
 
+
 def create_status_card(title, message, status="info"):
     """Create a status card with different styles"""
     status_classes = {
         "success": "status-success",
-        "warning": "status-warning", 
+        "warning": "status-warning",
         "error": "status-error",
-        "info": "status-info"
+        "info": "status-info",
     }
-    
+
     return f"""
     <div class="status-card {status_classes.get(status, 'status-info')}">
         <h4>{title}</h4>
@@ -36,10 +38,11 @@ def create_status_card(title, message, status="info"):
     </div>
     """
 
+
 def create_progress_bar(label, value, max_value=100, color="success"):
     """Create a custom progress bar"""
     percentage = (value / max_value) * 100 if max_value > 0 else 0
-    
+
     return f"""
     <div style="margin: 1rem 0;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
@@ -51,6 +54,7 @@ def create_progress_bar(label, value, max_value=100, color="success"):
         </div>
     </div>
     """
+
 
 def create_achievement_badge(name, description, unlocked=True, progress=0):
     """Create an achievement badge"""
@@ -67,6 +71,7 @@ def create_achievement_badge(name, description, unlocked=True, progress=0):
         </div>
         """
 
+
 def create_player_card(player_name, stats, rank=None):
     """Create a player card with stats"""
     rank_emoji = ""
@@ -78,7 +83,7 @@ def create_player_card(player_name, stats, rank=None):
         rank_emoji = "🥉"
     elif rank:
         rank_emoji = f"#{rank}"
-    
+
     return f"""
     <div class="metric-card">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -98,6 +103,7 @@ def create_player_card(player_name, stats, rank=None):
     </div>
     """
 
+
 def create_timeline_item(date, title, description, icon="📅"):
     """Create a timeline item"""
     return f"""
@@ -111,6 +117,7 @@ def create_timeline_item(date, title, description, icon="📅"):
     </div>
     """
 
+
 def create_loading_spinner():
     """Create a loading spinner"""
     return """
@@ -119,6 +126,7 @@ def create_loading_spinner():
         <span style="margin-left: 1rem; color: var(--text-secondary);">Loading...</span>
     </div>
     """
+
 
 def create_empty_state(title, description, icon="📊"):
     """Create an empty state component"""
@@ -130,53 +138,59 @@ def create_empty_state(title, description, icon="📊"):
     </div>
     """
 
+
 def create_filter_section(title, filters):
     """Create a filter section with multiple filters"""
     st.markdown(f"### 🔍 {title}")
-    
+
     cols = st.columns(len(filters))
     filter_values = {}
-    
+
     for i, (filter_name, filter_config) in enumerate(filters.items()):
         with cols[i]:
-            if filter_config['type'] == 'selectbox':
+            if filter_config["type"] == "selectbox":
                 filter_values[filter_name] = st.selectbox(
-                    filter_config['label'],
-                    options=filter_config['options'],
-                    help=filter_config.get('help', '')
+                    filter_config["label"],
+                    options=filter_config["options"],
+                    help=filter_config.get("help", ""),
                 )
-            elif filter_config['type'] == 'multiselect':
+            elif filter_config["type"] == "multiselect":
                 filter_values[filter_name] = st.multiselect(
-                    filter_config['label'],
-                    options=filter_config['options'],
-                    help=filter_config.get('help', '')
+                    filter_config["label"],
+                    options=filter_config["options"],
+                    help=filter_config.get("help", ""),
                 )
-            elif filter_config['type'] == 'date_input':
+            elif filter_config["type"] == "date_input":
                 filter_values[filter_name] = st.date_input(
-                    filter_config['label'],
-                    value=filter_config.get('value', datetime.now()),
-                    help=filter_config.get('help', '')
+                    filter_config["label"],
+                    value=filter_config.get("value", datetime.now()),
+                    help=filter_config.get("help", ""),
                 )
-    
+
     return filter_values
+
 
 def create_stats_grid(stats_data, columns=4):
     """Create a responsive stats grid"""
     cols = st.columns(columns)
-    
+
     for i, (title, value, subtitle, icon, color) in enumerate(stats_data):
         with cols[i % columns]:
-            st.markdown(create_metric_card(title, value, subtitle, icon, color), unsafe_allow_html=True)
+            st.markdown(
+                create_metric_card(title, value, subtitle, icon, color),
+                unsafe_allow_html=True,
+            )
+
 
 def create_comparison_table(data1, data2, labels):
     """Create a comparison table between two datasets"""
     comparison_data = []
-    
+
     for label in labels:
         if label in data1 and label in data2:
             val1 = data1[label]
             val2 = data2[label]
-            
+
             # Determine winner
             if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
                 if val1 > val2:
@@ -187,15 +201,13 @@ def create_comparison_table(data1, data2, labels):
                     winner = "tie"
             else:
                 winner = "tie"
-            
-            comparison_data.append({
-                'Metric': label,
-                'Value 1': val1,
-                'Value 2': val2,
-                'Winner': winner
-            })
-    
+
+            comparison_data.append(
+                {"Metric": label, "Value 1": val1, "Value 2": val2, "Winner": winner}
+            )
+
     return pd.DataFrame(comparison_data)
+
 
 def create_tooltip(text, icon="ℹ️"):
     """Create a tooltip component"""
@@ -209,4 +221,4 @@ def create_tooltip(text, icon="ℹ️"):
             {text}
         </div>
     </div>
-    """ 
+    """
