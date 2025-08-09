@@ -48,7 +48,7 @@ A comprehensive gaming analytics dashboard for tracking player performance, team
 
 ### Required Environment Variables
 - `GEMINI_API_KEY`: For AI-powered image extraction
-- `SUPABASE_URL` and `SUPABASE_KEY`: For cloud data storage (optional)
+- `SUPABASE_URL` and `SUPABASE_KEY`: For cloud data storage
 
 ### Local Development
 Create a `.streamlit/secrets.toml` file:
