@@ -1,6 +1,6 @@
 # Deadshot Stats Dashboard
 
-A very nice good comprehensive gaming analytics dashboard for tracking player performance, team dynamics, and match statistics.
+A very good comprehensive gaming analytics dashboard for tracking player performance, team dynamics, and match statistics.
 
 ## 🎮 Game Modes Supported
 
