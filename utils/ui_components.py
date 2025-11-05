@@ -21,8 +21,8 @@ def create_metric_card(title, value, subtitle="", icon="", color="primary"):
         "info": "rgba(0, 153, 255, 0.4)",
     }
 
-    selected_color = colors.get(color, colors['primary'])
-    selected_glow = glows.get(color, glows['primary'])
+    selected_color = colors.get(color, colors["primary"])
+    selected_glow = glows.get(color, glows["primary"])
 
     return f"""
     <div class="metric-card" style="border-color: {selected_glow};">
@@ -299,14 +299,18 @@ def create_section_header(title, subtitle="", icon=""):
 
 def create_content_container(content, title="", padding="2rem"):
     """Create a glassmorphic content container"""
-    header_html = f"""
+    header_html = (
+        f"""
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem;
                     border-bottom: 1px solid rgba(0, 245, 255, 0.2);">
             <h3 style="font-size: 1.25rem; font-weight: 700; font-family: 'Outfit', sans-serif; margin: 0; color: #ffffff;">
                 {title}
             </h3>
         </div>
-    """ if title else ""
+    """
+        if title
+        else ""
+    )
 
     return f"""
     <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px);
@@ -386,9 +390,11 @@ def create_info_card(title, items, icon="", color="primary"):
         "purple": "#b537ff",
     }
 
-    selected_color = colors.get(color, colors['primary'])
+    selected_color = colors.get(color, colors["primary"])
 
-    items_html = "".join([f'<li style="margin: 0.5rem 0; color: #a8b2d1;">{item}</li>' for item in items])
+    items_html = "".join(
+        [f'<li style="margin: 0.5rem 0; color: #a8b2d1;">{item}</li>' for item in items]
+    )
 
     return f"""
     <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px);
