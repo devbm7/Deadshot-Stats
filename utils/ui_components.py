@@ -265,11 +265,145 @@ def create_tooltip(text, icon="ℹ️"):
     return f"""
     <div style="position: relative; display: inline-block;">
         <span style="cursor: help;">{icon}</span>
-        <div style="position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); 
-                    background: var(--card-bg); color: var(--text-primary); padding: 0.5rem; 
-                    border-radius: 0.5rem; border: 1px solid var(--border-color); 
+        <div style="position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+                    background: var(--card-bg); color: var(--text-primary); padding: 0.5rem;
+                    border-radius: 0.5rem; border: 1px solid var(--border-color);
                     white-space: nowrap; z-index: 1000; opacity: 0; transition: opacity 0.3s;">
             {text}
         </div>
+    </div>
+    """
+
+
+def create_section_header(title, subtitle="", icon=""):
+    """Create a modern section header with gradient styling"""
+    return f"""
+    <div style="margin: 3rem 0 2rem 0; position: relative;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+            {f'<span style="font-size: 2rem; filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.5));">{icon}</span>' if icon else ''}
+            <h2 style="font-size: 2rem; font-weight: 800; font-family: \'Outfit\', sans-serif; margin: 0;
+                       background: linear-gradient(135deg, #00f5ff, #b537ff);
+                       -webkit-background-clip: text;
+                       -webkit-text-fill-color: transparent;
+                       background-clip: text;">
+                {title}
+            </h2>
+        </div>
+        {f'<p style="color: #6b7791; font-size: 1rem; margin: 0.5rem 0 0 0; padding-left: {3.5 if icon else 0}rem;">{subtitle}</p>' if subtitle else ''}
+        <div style="height: 2px; width: 100%; max-width: 200px; margin-top: 1rem;
+                    background: linear-gradient(90deg, #00f5ff, #b537ff, transparent);
+                    box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);"></div>
+    </div>
+    """
+
+
+def create_content_container(content, title="", padding="2rem"):
+    """Create a glassmorphic content container"""
+    header_html = f"""
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem;
+                    border-bottom: 1px solid rgba(0, 245, 255, 0.2);">
+            <h3 style="font-size: 1.25rem; font-weight: 700; font-family: 'Outfit', sans-serif; margin: 0; color: #ffffff;">
+                {title}
+            </h3>
+        </div>
+    """ if title else ""
+
+    return f"""
+    <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px);
+                border-radius: 1.25rem; border: 1px solid rgba(0, 245, 255, 0.2);
+                padding: {padding}; margin: 1.5rem 0;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+        {header_html}
+        {content}
+    </div>
+    """
+
+
+def create_stats_row(stats_data, columns=4):
+    """Create a responsive row of stat cards"""
+    # This will be used within Streamlit columns, so we return instructions
+    return stats_data
+
+
+def create_section_divider(style="gradient"):
+    """Create a decorative section divider"""
+    if style == "gradient":
+        return """
+        <div style="margin: 3rem 0; height: 1px;
+                    background: linear-gradient(90deg, transparent, #00f5ff, #b537ff, transparent);
+                    box-shadow: 0 0 10px rgba(0, 245, 255, 0.3);"></div>
+        """
+    elif style == "dots":
+        return """
+        <div style="margin: 3rem 0; text-align: center;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+                         background: #00f5ff; margin: 0 0.5rem; box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);"></span>
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+                         background: #b537ff; margin: 0 0.5rem; box-shadow: 0 0 10px rgba(181, 55, 255, 0.5);"></span>
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+                         background: #ff2e97; margin: 0 0.5rem; box-shadow: 0 0 10px rgba(255, 46, 151, 0.5);"></span>
+        </div>
+        """
+    else:
+        return """
+        <div style="margin: 3rem 0; height: 1px; background: rgba(100, 115, 150, 0.2);"></div>
+        """
+
+
+def create_page_header(title, subtitle="", icon=""):
+    """Create a premium page header with animation"""
+    return f"""
+    <div style="text-align: center; margin: 0 0 3rem 0; padding: 2rem 0; position: relative;">
+        <!-- Animated background glow -->
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    width: 300px; height: 300px;
+                    background: radial-gradient(circle, rgba(0, 245, 255, 0.15), transparent 70%);
+                    filter: blur(60px); pointer-events: none; z-index: 0;"></div>
+
+        <div style="position: relative; z-index: 1;">
+            {f'<div style="font-size: 4rem; margin-bottom: 1rem; filter: drop-shadow(0 0 20px rgba(0, 245, 255, 0.6)); animation: float 3s ease-in-out infinite;">{icon}</div>' if icon else ''}
+            <h1 style="font-size: 3.5rem; font-weight: 900; font-family: \'Outfit\', sans-serif; margin: 0; line-height: 1.2;
+                       background: linear-gradient(135deg, #00f5ff, #b537ff, #ff2e97);
+                       -webkit-background-clip: text;
+                       -webkit-text-fill-color: transparent;
+                       background-clip: text;
+                       text-shadow: 0 0 40px rgba(0, 245, 255, 0.3);">
+                {title}
+            </h1>
+            {f'<p style="color: #a8b2d1; font-size: 1.1rem; margin: 1rem 0 0 0; font-weight: 500;">{subtitle}</p>' if subtitle else ''}
+        </div>
+    </div>
+    """
+
+
+def create_info_card(title, items, icon="", color="primary"):
+    """Create an info card with a list of items"""
+    colors = {
+        "primary": "#00f5ff",
+        "success": "#00ff88",
+        "warning": "#ff6b35",
+        "error": "#ff3366",
+        "purple": "#b537ff",
+    }
+
+    selected_color = colors.get(color, colors['primary'])
+
+    items_html = "".join([f'<li style="margin: 0.5rem 0; color: #a8b2d1;">{item}</li>' for item in items])
+
+    return f"""
+    <div style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px);
+                border-radius: 1rem; border: 1px solid rgba(0, 245, 255, 0.2);
+                padding: 1.5rem; margin: 1rem 0;
+                border-left: 4px solid {selected_color};
+                box-shadow: -4px 0 20px rgba(0, 245, 255, 0.2);">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+            {f'<span style="font-size: 1.5rem; filter: drop-shadow(0 0 8px {selected_color});">{icon}</span>' if icon else ''}
+            <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #ffffff; font-family: \'Outfit\', sans-serif;">
+                {title}
+            </h4>
+        </div>
+        <ul style="margin: 0; padding-left: 1.5rem; list-style-type: none;">
+            {items_html}
+        </ul>
     </div>
     """

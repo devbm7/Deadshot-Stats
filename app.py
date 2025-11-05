@@ -79,6 +79,13 @@ from utils.image_processing import (
     format_extracted_data_for_display,
     get_extraction_confidence,
 )
+from utils.ui_components import (
+    create_section_header,
+    create_content_container,
+    create_section_divider,
+    create_page_header,
+    create_info_card,
+)
 
 # Page configuration
 st.set_page_config(
@@ -635,8 +642,14 @@ df = st.session_state.match_data
 
 # Dashboard Page
 if page == "🏠 Dashboard":
+    # Premium page header
     st.markdown(
-        '<h1 class="main-header">Deadshot Stats Dashboard</h1>', unsafe_allow_html=True
+        create_page_header(
+            "Deadshot Stats Dashboard",
+            "Your elite gaming analytics at a glance",
+            "🎯"
+        ),
+        unsafe_allow_html=True
     )
 
     # Create tabs for better organization
@@ -645,11 +658,21 @@ if page == "🏠 Dashboard":
     )
 
     with tab1:
+        # Overview section header
+        st.markdown(
+            create_section_header(
+                "Performance Overview",
+                "Key metrics and statistics across all matches",
+                "📊"
+            ),
+            unsafe_allow_html=True
+        )
+
         # Overview cards
         overview_stats = create_overview_cards(df)
 
-        # Main metrics row
-        col1, col2, col3 = st.columns(3)
+        # Main metrics row with enhanced spacing
+        col1, col2, col3 = st.columns(3, gap="large")
 
         with col1:
             st.markdown(
@@ -711,12 +734,22 @@ if page == "🏠 Dashboard":
                     unsafe_allow_html=True,
                 )
 
+        # Section divider
+        st.markdown(create_section_divider("gradient"), unsafe_allow_html=True)
+
         # Recent activity with enhanced styling
-        st.markdown("### 📈 Recent Activity")
+        st.markdown(
+            create_section_header(
+                "Recent Activity",
+                "Last 7 days performance summary",
+                "📈"
+            ),
+            unsafe_allow_html=True
+        )
         recent_activity = get_recent_activity(df)
 
         if recent_activity:
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns(3, gap="large")
             with col1:
                 st.markdown(
                     f"""
@@ -750,18 +783,29 @@ if page == "🏠 Dashboard":
                 )
 
     with tab2:
-        st.subheader("📈 Performance Charts")
+        # Performance Charts section
+        st.markdown(
+            create_section_header(
+                "Performance Charts",
+                "Visual analytics and player comparisons",
+                "📈"
+            ),
+            unsafe_allow_html=True
+        )
 
-        # K/D Leaderboard
-        st.write("**Top Players by K/D Ratio**")
+        # K/D Leaderboard in container
+        st.markdown("#### 🏆 Top Players by K/D Ratio")
         st.plotly_chart(
             create_kd_leaderboard_chart(df),
             use_container_width=True,
             key="kd_leaderboard_chart",
         )
 
+        # Section divider
+        st.markdown(create_section_divider("dots"), unsafe_allow_html=True)
+
         # Weapon Usage
-        st.write("**Weapon Usage Statistics**")
+        st.markdown("#### 🔫 Weapon Usage Statistics")
         st.plotly_chart(
             create_weapon_usage_chart(df),
             use_container_width=True,
@@ -769,7 +813,15 @@ if page == "🏠 Dashboard":
         )
 
     with tab3:
-        st.subheader("📋 All Players Stats Table")
+        # Player Stats section
+        st.markdown(
+            create_section_header(
+                "All Players Stats",
+                "Comprehensive player statistics and rankings",
+                "📋"
+            ),
+            unsafe_allow_html=True
+        )
         players = get_unique_players(df)
 
         if players:
@@ -827,7 +879,15 @@ if page == "🏠 Dashboard":
             st.info("No player data available. Add some matches first!")
 
     with tab4:
-        st.subheader("📅 Match Timeline")
+        # Match Timeline section
+        st.markdown(
+            create_section_header(
+                "Match Timeline",
+                "Performance trends over time",
+                "📅"
+            ),
+            unsafe_allow_html=True
+        )
 
         # Timeline type selection
         timeline_type = st.selectbox(
@@ -852,12 +912,28 @@ if page == "🏠 Dashboard":
 
 # Player Analysis Page
 elif page == "📊 Player Analysis":
-    st.title("📊 Player Analysis")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Player Analysis",
+            "Deep dive into individual player performance",
+            "📊"
+        ),
+        unsafe_allow_html=True
+    )
 
-    # Player selection
+    # Player selection with modern styling
     players = get_unique_players(df)
     if players:
-        selected_player = st.selectbox("Select Player", players)
+        st.markdown(
+            create_section_header(
+                "Select Player",
+                "Choose a player to analyze their detailed statistics",
+                "👤"
+            ),
+            unsafe_allow_html=True
+        )
+        selected_player = st.selectbox("Choose Player", players, label_visibility="collapsed")
 
         if selected_player:
             player_stats = get_player_stats(df, selected_player)
@@ -869,10 +945,18 @@ elif page == "📊 Player Analysis":
                 )
 
                 with tab1:
-                    st.markdown(f"### 📊 {selected_player} Overview")
+                    # Player overview section
+                    st.markdown(
+                        create_section_header(
+                            f"{selected_player} Overview",
+                            "Key performance indicators and statistics",
+                            "📊"
+                        ),
+                        unsafe_allow_html=True
+                    )
 
-                    # Player stats cards with enhanced styling
-                    col1, col2, col3, col4 = st.columns(4)
+                    # Player stats cards with enhanced spacing
+                    col1, col2, col3, col4 = st.columns(4, gap="large")
 
                     with col1:
                         st.markdown(
@@ -1056,7 +1140,15 @@ elif page == "📊 Player Analysis":
 
 # Team Analysis Page
 elif page == "👥 Team Analysis":
-    st.title("👥 Team Analysis")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Team Analysis",
+            "Analyze team dynamics, chemistry, and performance",
+            "👥"
+        ),
+        unsafe_allow_html=True
+    )
 
     # Create tabs for team analysis
     tab1, tab2, tab3 = st.tabs(
@@ -1064,7 +1156,14 @@ elif page == "👥 Team Analysis":
     )
 
     with tab1:
-        st.subheader("🏆 Team Performance")
+        st.markdown(
+            create_section_header(
+                "Team Performance",
+                "Overall team statistics and win rates",
+                "🏆"
+            ),
+            unsafe_allow_html=True
+        )
         team_stats = get_team_stats(df)
 
         if team_stats:
@@ -1078,12 +1177,27 @@ elif page == "👥 Team Analysis":
             st.info("No team data available. Team matches will appear here.")
 
     with tab2:
-        st.subheader("🔗 Team Dynamics")
+        st.markdown(
+            create_section_header(
+                "Team Dynamics",
+                "Player chemistry and role analysis",
+                "🔗"
+            ),
+            unsafe_allow_html=True
+        )
 
         # Team Chemistry Matrix
-        st.write("**Team Chemistry Matrix**")
-        st.write(
-            "Shows win rates when players team up together. Green = high win rate, Red = low win rate."
+        st.markdown("#### 🧪 Team Chemistry Matrix")
+        st.markdown(
+            create_info_card(
+                "About Chemistry Matrix",
+                ["Shows win rates when players team up together",
+                 "Green indicates high win rate combinations",
+                 "Red indicates areas for improvement"],
+                "💡",
+                "primary"
+            ),
+            unsafe_allow_html=True
         )
         chemistry_fig = create_team_chemistry_heatmap(df)
         st.plotly_chart(
@@ -1188,10 +1302,27 @@ elif page == "👥 Team Analysis":
 
 # Match History Page
 elif page == "📈 Match History":
-    st.title("📈 Match History")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Match History",
+            "Explore detailed match records and performance trends",
+            "📈"
+        ),
+        unsafe_allow_html=True
+    )
 
-    # Filters
-    col1, col2, col3 = st.columns(3)
+    # Filters section
+    st.markdown(
+        create_section_header(
+            "Filters",
+            "Refine your match history view",
+            "🔍"
+        ),
+        unsafe_allow_html=True
+    )
+
+    col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
         date_range = st.date_input(
@@ -1308,14 +1439,29 @@ elif page == "📈 Match History":
 
 # Data Input Page
 elif page == "🎮 Data Input":
-    st.title("🎮 Add Match Data")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Add Match Data",
+            "Import matches via AI-powered image extraction or manual entry",
+            "🎮"
+        ),
+        unsafe_allow_html=True
+    )
 
     # Create tabs for different input methods
     input_tab1, input_tab2 = st.tabs(["📷 Image Upload", "✏️ Manual Input"])
 
     with input_tab1:
         df = st.session_state.match_data  # Always use the latest data
-        st.markdown("### 📷 Upload Screenshot")
+        st.markdown(
+            create_section_header(
+                "Upload Screenshot",
+                "Let AI extract match data from your screenshot",
+                "📷"
+            ),
+            unsafe_allow_html=True
+        )
 
         # Check Gemini API configuration
         api_key = get_gemini_api_key()
@@ -2003,7 +2149,15 @@ elif page == "🎮 Data Input":
 
 # Advanced Analytics Page
 elif page == "🔧 Advanced Analytics":
-    st.title("🔧 Advanced Analytics")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Advanced Analytics",
+            "Deep insights, trends, and predictive analytics",
+            "🔧"
+        ),
+        unsafe_allow_html=True
+    )
 
     # Create tabs for advanced analytics
     tab1, tab2, tab3, tab4 = st.tabs(
@@ -2016,7 +2170,14 @@ elif page == "🔧 Advanced Analytics":
     )
 
     with tab1:
-        st.header("📈 Player Analytics")
+        st.markdown(
+            create_section_header(
+                "Player Analytics",
+                "Evolution, trends, and performance clusters",
+                "📈"
+            ),
+            unsafe_allow_html=True
+        )
 
         # Get unique players
         players = get_unique_players(df)
@@ -2213,9 +2374,26 @@ elif page == "🔧 Advanced Analytics":
 
 # Leaderboards Page
 elif page == "📋 Leaderboards":
-    st.title("📋 Leaderboards")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Leaderboards",
+            "See who's dominating the battlefield",
+            "📋"
+        ),
+        unsafe_allow_html=True
+    )
 
-    # Leaderboard type selection
+    # Leaderboard selection
+    st.markdown(
+        create_section_header(
+            "Rankings",
+            "Choose a category to view top performers",
+            "🏆"
+        ),
+        unsafe_allow_html=True
+    )
+
     leaderboard_type = st.selectbox(
         "Leaderboard Type",
         [
@@ -2345,15 +2523,27 @@ elif page == "📋 Leaderboards":
 
 # Fun Features Page
 elif page == "🎉 Fun Features":
-    st.title("🎉 Fun & Engaging Features")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Fun Features",
+            "Achievements, rankings, and gamification elements",
+            "🎉"
+        ),
+        unsafe_allow_html=True
+    )
 
     # Create tabs for fun features
     tab1, tab2, tab3 = st.tabs(["🏆 Rankings", "🏅 Achievements", "🎮 Sessions"])
 
     with tab1:
-        st.header("🏆 Battle Royale Rankings")
-        st.write(
-            "Tournament-style rankings with tier system based on overall performance."
+        st.markdown(
+            create_section_header(
+                "Battle Royale Rankings",
+                "Tournament-style tier system based on overall performance",
+                "🏆"
+            ),
+            unsafe_allow_html=True
         )
 
         rankings_fig = create_battle_royale_rankings_chart(df)
