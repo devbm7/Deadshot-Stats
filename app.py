@@ -79,6 +79,13 @@ from utils.image_processing import (
     format_extracted_data_for_display,
     get_extraction_confidence,
 )
+from utils.ui_components import (
+    create_section_header,
+    create_content_container,
+    create_section_divider,
+    create_page_header,
+    create_info_card,
+)
 
 # Page configuration
 st.set_page_config(
@@ -92,219 +99,477 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-    /* Import Poppins font */
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-    
-    /* Modern Gaming Theme */
+    /* Import Inter & Outfit fonts for modern feel */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+    /* Premium Gaming Theme with Neon Accents */
     :root {
-        --primary-color: #6366f1;
-        --secondary-color: #8b5cf6;
-        --accent-color: #f59e0b;
-        --success-color: #10b981;
-        --warning-color: #f59e0b;
-        --error-color: #ef4444;
-        --dark-bg: #0f172a;
-        --card-bg: #1e293b;
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --border-color: #334155;
+        /* Neon Gaming Colors */
+        --neon-cyan: #00f5ff;
+        --neon-purple: #b537ff;
+        --neon-pink: #ff2e97;
+        --neon-green: #00ff88;
+        --neon-orange: #ff6b35;
+        --neon-blue: #0099ff;
+
+        /* Primary Palette */
+        --primary-color: #00f5ff;
+        --primary-glow: rgba(0, 245, 255, 0.4);
+        --secondary-color: #b537ff;
+        --secondary-glow: rgba(181, 55, 255, 0.4);
+        --accent-color: #ff2e97;
+        --accent-glow: rgba(255, 46, 151, 0.4);
+
+        /* Status Colors */
+        --success-color: #00ff88;
+        --success-glow: rgba(0, 255, 136, 0.4);
+        --warning-color: #ff6b35;
+        --warning-glow: rgba(255, 107, 53, 0.4);
+        --error-color: #ff3366;
+        --error-glow: rgba(255, 51, 102, 0.4);
+
+        /* Dark Backgrounds */
+        --dark-bg: #0a0e1a;
+        --darker-bg: #060812;
+        --card-bg: rgba(15, 23, 42, 0.8);
+        --glass-bg: rgba(30, 41, 59, 0.6);
+
+        /* Text */
+        --text-primary: #ffffff;
+        --text-secondary: #a8b2d1;
+        --text-muted: #6b7791;
+
+        /* Borders */
+        --border-color: rgba(100, 115, 150, 0.2);
+        --border-glow: rgba(0, 245, 255, 0.3);
     }
-    
-    /* Global font family */
+
+    /* Global Styles */
     * {
-        font-family: 'Poppins', sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    
-    /* Main Header */
+
+    /* Headings use Outfit */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 700;
+    }
+
+    /* Smooth Scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Main Background */
+    .stApp {
+        background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+    }
+
+    /* Main Header with Neon Glow */
     .main-header {
-        font-size: 3.5rem;
-        font-weight: 800;
-        font-family: 'Poppins', sans-serif;
+        font-size: 4rem;
+        font-weight: 900;
+        font-family: 'Outfit', sans-serif;
         color: var(--text-primary);
         text-align: center;
         margin-bottom: 2rem;
-        text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        text-shadow:
+            0 0 10px var(--primary-glow),
+            0 0 20px var(--primary-glow),
+            0 0 30px var(--primary-glow),
+            0 4px 8px rgba(0,0,0,0.3);
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: glow-pulse 3s ease-in-out infinite;
     }
-    
-    /* Enhanced Metric Cards */
+
+    @keyframes glow-pulse {
+        0%, 100% {
+            filter: brightness(1) drop-shadow(0 0 20px var(--primary-glow));
+        }
+        50% {
+            filter: brightness(1.2) drop-shadow(0 0 30px var(--primary-glow));
+        }
+    }
+
+    /* Glassmorphism Metric Cards */
     .metric-card {
-        background: linear-gradient(135deg, var(--card-bg), #2d3748);
-        padding: 1.5rem;
-        border-radius: 1rem;
-        border: 1px solid var(--border-color);
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px) saturate(180%);
+        -webkit-backdrop-filter: blur(10px) saturate(180%);
+        padding: 1.75rem;
+        border-radius: 1.25rem;
+        border: 1px solid var(--border-glow);
         color: var(--text-primary);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
     }
-    
+
+    /* Animated gradient border */
     .metric-card::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        height: 3px;
+        background: linear-gradient(90deg,
+            var(--neon-cyan) 0%,
+            var(--neon-purple) 33%,
+            var(--neon-pink) 66%,
+            var(--neon-cyan) 100%);
+        background-size: 200% 100%;
+        animation: gradient-shift 3s linear infinite;
     }
-    
+
+    @keyframes gradient-shift {
+        0% { background-position: 0% 0%; }
+        100% { background-position: 200% 0%; }
+    }
+
+    /* Glow effect overlay */
+    .metric-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 50% 0%, var(--primary-glow), transparent 70%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        pointer-events: none;
+    }
+
     .metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        transform: translateY(-6px) scale(1.02);
+        box-shadow:
+            0 16px 48px rgba(0, 0, 0, 0.6),
+            0 0 40px var(--primary-glow),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        border-color: var(--neon-cyan);
     }
-    
+
+    .metric-card:hover::after {
+        opacity: 1;
+    }
+
     .metric-card h3 {
         color: var(--text-secondary);
-        font-size: 0.9rem;
-        font-weight: 600;
-        font-family: 'Poppins', sans-serif;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .metric-card h2 {
-        font-size: 2.5rem;
+        font-size: 0.85rem;
         font-weight: 700;
-        font-family: 'Poppins', sans-serif;
+        font-family: 'Outfit', sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 0.75rem;
+    }
+
+    .metric-card h2 {
+        font-size: 3rem;
+        font-weight: 800;
+        font-family: 'Outfit', sans-serif;
         margin: 0;
         color: var(--text-primary);
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
-    
-    /* Status Cards */
+
+    /* Status Cards with Neon Borders */
     .status-card {
-        background: var(--card-bg);
-        padding: 1rem;
-        border-radius: 0.75rem;
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        padding: 1.25rem;
+        border-radius: 1rem;
         border: 1px solid var(--border-color);
-        margin: 0.5rem 0;
-        font-family: 'Poppins', sans-serif;
+        margin: 0.75rem 0;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.3s ease;
     }
-    
+
     .status-success {
         border-left: 4px solid var(--success-color);
+        box-shadow: -4px 0 20px var(--success-glow);
     }
-    
+
     .status-warning {
         border-left: 4px solid var(--warning-color);
+        box-shadow: -4px 0 20px var(--warning-glow);
     }
-    
+
     .status-error {
         border-left: 4px solid var(--error-color);
+        box-shadow: -4px 0 20px var(--error-glow);
     }
-    
-    /* Enhanced Sidebar */
-    .sidebar .sidebar-content {
-        background: linear-gradient(180deg, var(--dark-bg), #1e293b);
-        border-right: 1px solid var(--border-color);
+
+    /* Enhanced Sidebar with Gradient */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+        border-right: 1px solid var(--border-glow);
+        box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5);
     }
-    
-    /* Custom Buttons */
+
+    [data-testid="stSidebar"]::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 2px;
+        height: 100%;
+        background: linear-gradient(180deg,
+            var(--neon-cyan) 0%,
+            var(--neon-purple) 50%,
+            var(--neon-pink) 100%);
+        opacity: 0.5;
+        animation: slide-gradient 4s ease-in-out infinite;
+    }
+
+    @keyframes slide-gradient {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.7; }
+    }
+
+    /* Modern Buttons with Neon Glow */
     .stButton > button {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
         border: none;
-        border-radius: 0.75rem;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        font-family: 'Poppins', sans-serif;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        border-radius: 0.875rem;
+        padding: 0.875rem 1.75rem;
+        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow:
+            0 4px 16px var(--primary-glow),
+            0 2px 8px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
     }
-    
+
+    .stButton > button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s;
+    }
+
+    .stButton > button:hover::before {
+        left: 100%;
+    }
+
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        transform: translateY(-3px) scale(1.05);
+        box-shadow:
+            0 8px 28px var(--primary-glow),
+            0 4px 16px rgba(0, 0, 0, 0.4);
     }
-    
-    /* Tab Styling */
+
+    .stButton > button:active {
+        transform: translateY(-1px) scale(1.02);
+    }
+
+    /* Premium Tab Styling */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+        gap: 12px;
+        background: var(--darker-bg);
+        padding: 0.5rem;
+        border-radius: 1rem;
     }
-    
+
     .stTabs [data-baseweb="tab"] {
         background: var(--card-bg);
-        border-radius: 0.5rem;
+        backdrop-filter: blur(10px);
+        border-radius: 0.75rem;
         border: 1px solid var(--border-color);
         color: var(--text-secondary);
         font-weight: 600;
-        font-family: 'Poppins', sans-serif;
-        transition: all 0.3s ease;
+        font-family: 'Outfit', sans-serif;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background: var(--glass-bg);
+        border-color: var(--border-glow);
+        color: var(--text-primary);
+    }
+
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
-        border-color: var(--primary-color);
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple)) !important;
+        color: white !important;
+        border-color: transparent !important;
+        box-shadow: 0 4px 20px var(--primary-glow);
     }
-    
-    /* Dataframe Styling */
+
+    /* Enhanced Dataframe Styling */
     .dataframe {
-        background: var(--card-bg);
-        border-radius: 0.75rem;
-        overflow: hidden;
-    }
-    
-    /* Progress Bars */
-    .progress-container {
-        background: var(--border-color);
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
         border-radius: 1rem;
-        height: 8px;
+        border: 1px solid var(--border-color);
         overflow: hidden;
-        margin: 0.5rem 0;
     }
-    
+
+    /* Animated Progress Bars */
+    .progress-container {
+        background: rgba(100, 115, 150, 0.15);
+        border-radius: 1rem;
+        height: 10px;
+        overflow: hidden;
+        margin: 0.75rem 0;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
     .progress-bar {
         height: 100%;
-        background: linear-gradient(90deg, var(--success-color), var(--accent-color));
+        background: linear-gradient(90deg, var(--neon-green), var(--neon-cyan));
         border-radius: 1rem;
-        transition: width 0.3s ease;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 20px var(--success-glow);
+        animation: pulse-glow 2s ease-in-out infinite;
     }
-    
-    /* Achievement Badges */
+
+    @keyframes pulse-glow {
+        0%, 100% {
+            box-shadow: 0 0 15px var(--success-glow);
+        }
+        50% {
+            box-shadow: 0 0 25px var(--success-glow);
+        }
+    }
+
+    /* Premium Achievement Badges */
     .achievement-badge {
         display: inline-block;
-        padding: 0.5rem 1rem;
+        padding: 0.625rem 1.25rem;
         border-radius: 2rem;
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin: 0.25rem;
-        background: linear-gradient(135deg, var(--accent-color), #f97316);
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin: 0.375rem;
+        background: linear-gradient(135deg, var(--neon-orange), var(--neon-pink));
         color: white;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        box-shadow: 0 4px 16px var(--accent-glow);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        font-family: 'Outfit', sans-serif;
+        letter-spacing: 0.5px;
     }
-    
-    /* Loading Animation */
+
+    .achievement-badge:hover {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 6px 24px var(--accent-glow);
+    }
+
+    /* Modern Loading Spinner */
     .loading-spinner {
         display: inline-block;
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
         border: 3px solid var(--border-color);
         border-radius: 50%;
-        border-top-color: var(--primary-color);
-        animation: spin 1s ease-in-out infinite;
+        border-top-color: var(--neon-cyan);
+        border-right-color: var(--neon-purple);
+        animation: spin-glow 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        box-shadow: 0 0 20px var(--primary-glow);
     }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+
+    @keyframes spin-glow {
+        to {
+            transform: rotate(360deg);
+        }
     }
-    
+
+    /* Input Fields Enhancement */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div > div,
+    .stMultiSelect > div > div > div {
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 0.75rem !important;
+        color: var(--text-primary) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div > div:focus,
+    .stMultiSelect > div > div > div:focus {
+        border-color: var(--neon-cyan) !important;
+        box-shadow: 0 0 20px var(--primary-glow) !important;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--darker-bg);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
+        border-radius: 10px;
+        border: 2px solid var(--darker-bg);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, var(--neon-purple), var(--neon-pink));
+        box-shadow: 0 0 10px var(--primary-glow);
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
         .main-header {
             font-size: 2.5rem;
         }
-        
+
         .metric-card h2 {
             font-size: 2rem;
         }
+
+        .metric-card {
+            padding: 1.25rem;
+        }
     }
-    
-    /* Dark mode compatibility */
+
+    /* Enhanced Dark Theme */
     @media (prefers-color-scheme: dark) {
         .metric-card {
-            background: var(--card-bg);
+            background: var(--glass-bg);
             color: var(--text-primary);
+        }
+    }
+
+    /* Floating Animation for Special Elements */
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    /* Shimmer Effect */
+    @keyframes shimmer {
+        0% {
+            background-position: -1000px 0;
+        }
+        100% {
+            background-position: 1000px 0;
         }
     }
 </style>
@@ -316,16 +581,39 @@ st.markdown(
 if "match_data" not in st.session_state:
     st.session_state.match_data = load_match_data()
 
-# Enhanced Sidebar navigation
+# Enhanced Sidebar navigation with premium branding
 st.sidebar.markdown(
     """
-<div style="text-align: center; padding: 1rem 0;">
-    <h1 style="font-size: 2rem; font-weight: 800; font-family: 'Poppins', sans-serif; color: #f8fafc; margin: 0;">
-        Deadshot Stats
-    </h1>
-    <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0.5rem 0 0 0;">
-        Gaming Analytics Dashboard
-    </p>
+<div style="text-align: center; padding: 2rem 1rem 1.5rem; position: relative;">
+    <!-- Animated background glow -->
+    <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 150px; height: 150px;
+                background: radial-gradient(circle, rgba(0, 245, 255, 0.2), transparent 70%);
+                filter: blur(40px); pointer-events: none;"></div>
+
+    <!-- Logo/Brand -->
+    <div style="position: relative; z-index: 1;">
+        <div style="font-size: 3rem; margin-bottom: 0.5rem; filter: drop-shadow(0 0 20px rgba(0, 245, 255, 0.6));">
+            🎯
+        </div>
+        <h1 style="font-size: 1.75rem; font-weight: 900; font-family: 'Outfit', sans-serif;
+                   margin: 0; line-height: 1.2;
+                   background: linear-gradient(135deg, #00f5ff, #b537ff, #ff2e97);
+                   -webkit-background-clip: text;
+                   -webkit-text-fill-color: transparent;
+                   background-clip: text;
+                   text-shadow: 0 0 30px rgba(0, 245, 255, 0.5);">
+            DEADSHOT
+        </h1>
+        <p style="color: #a8b2d1; font-size: 0.75rem; font-weight: 600; letter-spacing: 2px;
+                  margin: 0.5rem 0 0 0; text-transform: uppercase; font-family: 'Inter', sans-serif;">
+            Elite Gaming Analytics
+        </p>
+
+        <!-- Decorative line -->
+        <div style="width: 60px; height: 2px; margin: 1rem auto 0;
+                    background: linear-gradient(90deg, transparent, #00f5ff, transparent);
+                    box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);"></div>
+    </div>
 </div>
 """,
     unsafe_allow_html=True,
@@ -354,8 +642,12 @@ df = st.session_state.match_data
 
 # Dashboard Page
 if page == "🏠 Dashboard":
+    # Premium page header
     st.markdown(
-        '<h1 class="main-header">Deadshot Stats Dashboard</h1>', unsafe_allow_html=True
+        create_page_header(
+            "Deadshot Stats Dashboard", "Your elite gaming analytics at a glance", "🎯"
+        ),
+        unsafe_allow_html=True,
     )
 
     # Create tabs for better organization
@@ -364,11 +656,21 @@ if page == "🏠 Dashboard":
     )
 
     with tab1:
+        # Overview section header
+        st.markdown(
+            create_section_header(
+                "Performance Overview",
+                "Key metrics and statistics across all matches",
+                "📊",
+            ),
+            unsafe_allow_html=True,
+        )
+
         # Overview cards
         overview_stats = create_overview_cards(df)
 
-        # Main metrics row
-        col1, col2, col3 = st.columns(3)
+        # Main metrics row with enhanced spacing
+        col1, col2, col3 = st.columns(3, gap="large")
 
         with col1:
             st.markdown(
@@ -430,12 +732,20 @@ if page == "🏠 Dashboard":
                     unsafe_allow_html=True,
                 )
 
+        # Section divider
+        st.markdown(create_section_divider("gradient"), unsafe_allow_html=True)
+
         # Recent activity with enhanced styling
-        st.markdown("### 📈 Recent Activity")
+        st.markdown(
+            create_section_header(
+                "Recent Activity", "Last 7 days performance summary", "📈"
+            ),
+            unsafe_allow_html=True,
+        )
         recent_activity = get_recent_activity(df)
 
         if recent_activity:
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3 = st.columns(3, gap="large")
             with col1:
                 st.markdown(
                     f"""
@@ -469,18 +779,27 @@ if page == "🏠 Dashboard":
                 )
 
     with tab2:
-        st.subheader("📈 Performance Charts")
+        # Performance Charts section
+        st.markdown(
+            create_section_header(
+                "Performance Charts", "Visual analytics and player comparisons", "📈"
+            ),
+            unsafe_allow_html=True,
+        )
 
-        # K/D Leaderboard
-        st.write("**Top Players by K/D Ratio**")
+        # K/D Leaderboard in container
+        st.markdown("#### 🏆 Top Players by K/D Ratio")
         st.plotly_chart(
             create_kd_leaderboard_chart(df),
             use_container_width=True,
             key="kd_leaderboard_chart",
         )
 
+        # Section divider
+        st.markdown(create_section_divider("dots"), unsafe_allow_html=True)
+
         # Weapon Usage
-        st.write("**Weapon Usage Statistics**")
+        st.markdown("#### 🔫 Weapon Usage Statistics")
         st.plotly_chart(
             create_weapon_usage_chart(df),
             use_container_width=True,
@@ -488,7 +807,15 @@ if page == "🏠 Dashboard":
         )
 
     with tab3:
-        st.subheader("📋 All Players Stats Table")
+        # Player Stats section
+        st.markdown(
+            create_section_header(
+                "All Players Stats",
+                "Comprehensive player statistics and rankings",
+                "📋",
+            ),
+            unsafe_allow_html=True,
+        )
         players = get_unique_players(df)
 
         if players:
@@ -546,7 +873,13 @@ if page == "🏠 Dashboard":
             st.info("No player data available. Add some matches first!")
 
     with tab4:
-        st.subheader("📅 Match Timeline")
+        # Match Timeline section
+        st.markdown(
+            create_section_header(
+                "Match Timeline", "Performance trends over time", "📅"
+            ),
+            unsafe_allow_html=True,
+        )
 
         # Timeline type selection
         timeline_type = st.selectbox(
@@ -571,12 +904,28 @@ if page == "🏠 Dashboard":
 
 # Player Analysis Page
 elif page == "📊 Player Analysis":
-    st.title("📊 Player Analysis")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Player Analysis", "Deep dive into individual player performance", "📊"
+        ),
+        unsafe_allow_html=True,
+    )
 
-    # Player selection
+    # Player selection with modern styling
     players = get_unique_players(df)
     if players:
-        selected_player = st.selectbox("Select Player", players)
+        st.markdown(
+            create_section_header(
+                "Select Player",
+                "Choose a player to analyze their detailed statistics",
+                "👤",
+            ),
+            unsafe_allow_html=True,
+        )
+        selected_player = st.selectbox(
+            "Choose Player", players, label_visibility="collapsed"
+        )
 
         if selected_player:
             player_stats = get_player_stats(df, selected_player)
@@ -588,10 +937,18 @@ elif page == "📊 Player Analysis":
                 )
 
                 with tab1:
-                    st.markdown(f"### 📊 {selected_player} Overview")
+                    # Player overview section
+                    st.markdown(
+                        create_section_header(
+                            f"{selected_player} Overview",
+                            "Key performance indicators and statistics",
+                            "📊",
+                        ),
+                        unsafe_allow_html=True,
+                    )
 
-                    # Player stats cards with enhanced styling
-                    col1, col2, col3, col4 = st.columns(4)
+                    # Player stats cards with enhanced spacing
+                    col1, col2, col3, col4 = st.columns(4, gap="large")
 
                     with col1:
                         st.markdown(
@@ -775,7 +1132,13 @@ elif page == "📊 Player Analysis":
 
 # Team Analysis Page
 elif page == "👥 Team Analysis":
-    st.title("👥 Team Analysis")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Team Analysis", "Analyze team dynamics, chemistry, and performance", "👥"
+        ),
+        unsafe_allow_html=True,
+    )
 
     # Create tabs for team analysis
     tab1, tab2, tab3 = st.tabs(
@@ -783,7 +1146,12 @@ elif page == "👥 Team Analysis":
     )
 
     with tab1:
-        st.subheader("🏆 Team Performance")
+        st.markdown(
+            create_section_header(
+                "Team Performance", "Overall team statistics and win rates", "🏆"
+            ),
+            unsafe_allow_html=True,
+        )
         team_stats = get_team_stats(df)
 
         if team_stats:
@@ -797,12 +1165,27 @@ elif page == "👥 Team Analysis":
             st.info("No team data available. Team matches will appear here.")
 
     with tab2:
-        st.subheader("🔗 Team Dynamics")
+        st.markdown(
+            create_section_header(
+                "Team Dynamics", "Player chemistry and role analysis", "🔗"
+            ),
+            unsafe_allow_html=True,
+        )
 
         # Team Chemistry Matrix
-        st.write("**Team Chemistry Matrix**")
-        st.write(
-            "Shows win rates when players team up together. Green = high win rate, Red = low win rate."
+        st.markdown("#### 🧪 Team Chemistry Matrix")
+        st.markdown(
+            create_info_card(
+                "About Chemistry Matrix",
+                [
+                    "Shows win rates when players team up together",
+                    "Green indicates high win rate combinations",
+                    "Red indicates areas for improvement",
+                ],
+                "💡",
+                "primary",
+            ),
+            unsafe_allow_html=True,
         )
         chemistry_fig = create_team_chemistry_heatmap(df)
         st.plotly_chart(
@@ -907,10 +1290,23 @@ elif page == "👥 Team Analysis":
 
 # Match History Page
 elif page == "📈 Match History":
-    st.title("📈 Match History")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Match History",
+            "Explore detailed match records and performance trends",
+            "📈",
+        ),
+        unsafe_allow_html=True,
+    )
 
-    # Filters
-    col1, col2, col3 = st.columns(3)
+    # Filters section
+    st.markdown(
+        create_section_header("Filters", "Refine your match history view", "🔍"),
+        unsafe_allow_html=True,
+    )
+
+    col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
         date_range = st.date_input(
@@ -1027,14 +1423,29 @@ elif page == "📈 Match History":
 
 # Data Input Page
 elif page == "🎮 Data Input":
-    st.title("🎮 Add Match Data")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Add Match Data",
+            "Import matches via AI-powered image extraction or manual entry",
+            "🎮",
+        ),
+        unsafe_allow_html=True,
+    )
 
     # Create tabs for different input methods
     input_tab1, input_tab2 = st.tabs(["📷 Image Upload", "✏️ Manual Input"])
 
     with input_tab1:
         df = st.session_state.match_data  # Always use the latest data
-        st.markdown("### 📷 Upload Screenshot")
+        st.markdown(
+            create_section_header(
+                "Upload Screenshot",
+                "Let AI extract match data from your screenshot",
+                "📷",
+            ),
+            unsafe_allow_html=True,
+        )
 
         # Check Gemini API configuration
         api_key = get_gemini_api_key()
@@ -1722,7 +2133,15 @@ elif page == "🎮 Data Input":
 
 # Advanced Analytics Page
 elif page == "🔧 Advanced Analytics":
-    st.title("🔧 Advanced Analytics")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Advanced Analytics",
+            "Deep insights, trends, and predictive analytics",
+            "🔧",
+        ),
+        unsafe_allow_html=True,
+    )
 
     # Create tabs for advanced analytics
     tab1, tab2, tab3, tab4 = st.tabs(
@@ -1735,7 +2154,12 @@ elif page == "🔧 Advanced Analytics":
     )
 
     with tab1:
-        st.header("📈 Player Analytics")
+        st.markdown(
+            create_section_header(
+                "Player Analytics", "Evolution, trends, and performance clusters", "📈"
+            ),
+            unsafe_allow_html=True,
+        )
 
         # Get unique players
         players = get_unique_players(df)
@@ -1932,9 +2356,22 @@ elif page == "🔧 Advanced Analytics":
 
 # Leaderboards Page
 elif page == "📋 Leaderboards":
-    st.title("📋 Leaderboards")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Leaderboards", "See who's dominating the battlefield", "📋"
+        ),
+        unsafe_allow_html=True,
+    )
 
-    # Leaderboard type selection
+    # Leaderboard selection
+    st.markdown(
+        create_section_header(
+            "Rankings", "Choose a category to view top performers", "🏆"
+        ),
+        unsafe_allow_html=True,
+    )
+
     leaderboard_type = st.selectbox(
         "Leaderboard Type",
         [
@@ -2064,15 +2501,25 @@ elif page == "📋 Leaderboards":
 
 # Fun Features Page
 elif page == "🎉 Fun Features":
-    st.title("🎉 Fun & Engaging Features")
+    # Premium page header
+    st.markdown(
+        create_page_header(
+            "Fun Features", "Achievements, rankings, and gamification elements", "🎉"
+        ),
+        unsafe_allow_html=True,
+    )
 
     # Create tabs for fun features
     tab1, tab2, tab3 = st.tabs(["🏆 Rankings", "🏅 Achievements", "🎮 Sessions"])
 
     with tab1:
-        st.header("🏆 Battle Royale Rankings")
-        st.write(
-            "Tournament-style rankings with tier system based on overall performance."
+        st.markdown(
+            create_section_header(
+                "Battle Royale Rankings",
+                "Tournament-style tier system based on overall performance",
+                "🏆",
+            ),
+            unsafe_allow_html=True,
         )
 
         rankings_fig = create_battle_royale_rankings_chart(df)
